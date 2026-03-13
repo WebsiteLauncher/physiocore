@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhysioCore — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #F7F4EE;
+  --dark: #0F1A14;
+  --green: #1E6B45;
+  --green-light: #2E8B5A;
+  --green-pale: #D4EAD9;
+  --accent: #C8E63C;
+  --text: #1A2B22;
+  --muted: #6B8070;
+  --white: #FFFFFF;
+  --border: rgba(30,107,69,0.13);
+  --sidebar: #0F1A14;
+  --red: #E63C3C;
+  --orange: #F59E0B;
+  --blue: #3B82F6;
+  --shadow: 0 4px 24px rgba(15,26,20,0.08);
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); overflow: hidden; }
+
+/* Admin Login Gate */
+.admin-login-gate {
+  position: fixed; inset: 0; z-index: 9999;
+  background: linear-gradient(135deg, #0F1A14 0%, #1E3A2A 60%, #0F1A14 100%);
+  display: flex; align-items: center; justify-content: center;
+}
+.admin-login-gate.hidden { display: none; }
+.admin-login-box {
+  width: 400px; max-width: 90vw;
+  background: #1A2B22; border-radius: 24px;
+  padding: 44px 40px; text-align: center;
+  border: 1px solid rgba(200,230,60,0.15);
+  box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+  animation: slideUp 0.5s ease both;
+}
+@keyframes slideUp { from{transform:translateY(24px);opacity:0} to{transform:translateY(0);opacity:1} }
+.admin-login-icon { font-size: 2.5rem; margin-bottom: 16px; }
+.admin-login-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 900; color: white; margin-bottom: 4px; }
+.admin-login-title span { color: var(--accent); }
+.admin-login-sub { font-size: 0.78rem; color: rgba(255,255,255,0.35); margin-bottom: 32px; letter-spacing: 0.05em; }
+.admin-field { margin-bottom: 14px; text-align: left; }
+.admin-label { font-size: 0.68rem; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; display: block; }
+.admin-input {
+  width: 100%; padding: 12px 16px;
+  border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.07); font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem; color: white; outline: none;
+  transition: border-color 0.2s;
+}
+.admin-input::placeholder { color: rgba(255,255,255,0.25); }
+.admin-input:focus { border-color: var(--accent); }
+.admin-login-btn {
+  width: 100%; padding: 13px; background: var(--accent); color: var(--dark);
+  border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 6px;
+  transition: all 0.2s;
+}
+.admin-login-btn:hover { background: #d4f040; transform: translateY(-1px); }
+.admin-login-error { background: rgba(230,60,60,0.15); border: 1px solid rgba(230,60,60,0.3); color: #FF8080; border-radius: 10px; padding: 10px 14px; font-size: 0.78rem; margin-bottom: 14px; display: none; }
+.admin-login-error.show { display: block; }
+.admin-hint { margin-top: 20px; padding: 14px; background: rgba(200,230,60,0.07); border-radius: 12px; border: 1px solid rgba(200,230,60,0.12); }
+.admin-hint p { font-size: 0.72rem; color: rgba(255,255,255,0.3); line-height: 1.8; font-family: 'DM Mono', monospace; }
+
+/* Layout */
+.app { display: flex; height: 100vh; }
+
+/* Sidebar */
+.sidebar {
+  width: 240px; flex-shrink: 0;
+  background: var(--sidebar);
+  display: flex; flex-direction: column;
+  padding: 24px 0;
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+.sidebar-logo {
+  padding: 0 24px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 16px;
+}
+.logo { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 900; color: white; }
+.logo span { color: var(--accent); }
+.logo-tag { font-size: 0.65rem; color: rgba(255,255,255,0.3); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px; }
+
+.nav-section { padding: 8px 16px 4px; font-size: 0.62rem; color: rgba(255,255,255,0.25); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 8px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; margin: 2px 8px;
+  border-radius: 10px; cursor: pointer;
+  transition: all 0.2s; color: rgba(255,255,255,0.45);
+  font-size: 0.85rem; font-weight: 500;
+}
+.nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
+.nav-item.active { background: var(--green); color: white; }
+.nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+.nav-badge {
+  margin-left: auto; background: var(--accent); color: var(--dark);
+  font-size: 0.62rem; font-weight: 700;
+  padding: 1px 7px; border-radius: 100px;
+}
+
+.sidebar-footer { margin-top: auto; padding: 16px; border-top: 1px solid rgba(255,255,255,0.06); }
+.admin-user { display: flex; align-items: center; gap: 10px; }
+.admin-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--green); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 700;
+}
+.admin-name { font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.7); }
+.admin-role { font-size: 0.65rem; color: rgba(255,255,255,0.3); }
+
+/* Main */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Topbar */
+.topbar {
+  background: var(--white); padding: 16px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.page-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-search {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--cream); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px 14px;
+}
+.topbar-search input {
+  border: none; background: none; font-family: 'DM Sans', sans-serif;
+  font-size: 0.83rem; color: var(--text); outline: none; width: 200px;
+}
+.topbar-search input::placeholder { color: var(--muted); }
+.btn-export {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--green); color: white;
+  border: none; padding: 8px 16px; border-radius: 10px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-export:hover { background: var(--green-light); }
+.btn-seed {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--cream); color: var(--green);
+  border: 1.5px solid var(--border); padding: 8px 16px; border-radius: 10px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-seed:hover { border-color: var(--green); background: var(--green-pale); }
+.notif-btn {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--cream); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1rem; position: relative; transition: all 0.2s;
+}
+.notif-btn:hover { border-color: var(--green); }
+.notif-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--red); border: 2px solid white; }
+
+/* Content */
+.content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+
+/* Pages */
+.page { display: none; }
+.page.active { display: block; animation: fadeUp 0.3s ease both; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+/* KPI Cards */
+.kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+.kpi-card {
+  background: var(--white); border-radius: 16px;
+  padding: 20px 22px; border: 1.5px solid var(--border);
+  transition: all 0.3s; cursor: default;
+}
+.kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--green); }
+.kpi-label { font-size: 0.72rem; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+.kpi-value { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: var(--text); line-height: 1; }
+.kpi-change { font-size: 0.75rem; margin-top: 6px; }
+.kpi-change.up { color: var(--green); }
+.kpi-change.down { color: var(--red); }
+.kpi-icon { float: right; font-size: 1.6rem; opacity: 0.15; margin-top: -30px; }
+
+/* Charts Row */
+.charts-row { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card { background: var(--white); border-radius: 16px; padding: 22px; border: 1.5px solid var(--border); }
+.chart-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+.chart-sub { font-size: 0.75rem; color: var(--muted); margin-bottom: 18px; }
+
+/* Bar chart */
+.bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; }
+.bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+.bar {
+  width: 100%; border-radius: 6px 6px 0 0;
+  background: var(--green-pale);
+  transition: height 0.6s ease, background 0.2s;
+  cursor: default; position: relative;
+}
+.bar:hover { background: var(--green); }
+.bar:hover .bar-tooltip { display: block; }
+.bar-tooltip {
+  display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  background: var(--dark); color: white; font-size: 0.65rem; white-space: nowrap;
+  padding: 3px 8px; border-radius: 6px; margin-bottom: 4px;
+}
+.bar-label { font-size: 0.65rem; color: var(--muted); }
+
+/* Donut chart */
+.donut-wrap { display: flex; align-items: center; gap: 20px; }
+.donut-svg { flex-shrink: 0; }
+.donut-legend { display: flex; flex-direction: column; gap: 10px; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.legend-pct { font-weight: 700; font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); margin-left: auto; }
+
+/* Bookings Table */
+.table-card { background: var(--white); border-radius: 16px; border: 1.5px solid var(--border); overflow: hidden; }
+.table-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border); }
+.table-title { font-weight: 700; font-size: 0.9rem; }
+.filter-tabs { display: flex; gap: 4px; }
+.filter-tab {
+  padding: 5px 12px; border-radius: 8px;
+  font-size: 0.75rem; font-weight: 600; cursor: pointer;
+  transition: all 0.2s; border: 1px solid transparent;
+  color: var(--muted);
+}
+.filter-tab:hover { color: var(--green); }
+.filter-tab.active { background: var(--green-pale); color: var(--green); border-color: var(--border); }
+
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: var(--cream); }
+th { padding: 10px 16px; text-align: left; font-size: 0.7rem; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+td { padding: 13px 16px; font-size: 0.83rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tbody tr { transition: background 0.15s; cursor: pointer; }
+tbody tr:hover { background: var(--cream); }
+
+.booking-id { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); }
+.patient-cell { display: flex; align-items: center; gap: 10px; }
+.patient-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--green-pale); color: var(--green); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
+.patient-name { font-weight: 600; font-size: 0.85rem; }
+.patient-contact { font-size: 0.7rem; color: var(--muted); }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 100px;
+  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.03em;
+}
+.badge-confirmed { background: #D4EAD9; color: #1E6B45; }
+.badge-pending   { background: #FEF3C7; color: #D97706; }
+.badge-completed { background: #DBEAFE; color: #1D4ED8; }
+.badge-cancelled { background: #FEE2E2; color: #DC2626; }
+
+.action-btn {
+  padding: 4px 10px; border-radius: 7px; font-size: 0.72rem;
+  font-weight: 600; border: 1px solid var(--border); background: none;
+  cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+}
+.action-btn:hover { border-color: var(--green); color: var(--green); background: var(--green-pale); }
+.action-btn.del:hover { border-color: var(--red); color: var(--red); background: #FEE2E2; }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 48px 24px; color: var(--muted); }
+.empty-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.3; }
+.empty-title { font-weight: 700; font-size: 1rem; color: var(--text); margin-bottom: 6px; }
+.empty-desc { font-size: 0.82rem; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15,26,20,0.6);
+  backdrop-filter: blur(6px); z-index: 1000;
+  display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; animation: fadeIn 0.2s ease both; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.modal {
+  background: var(--white); border-radius: 20px;
+  width: 480px; max-width: 90vw; max-height: 85vh; overflow-y: auto;
+  animation: slideUp 0.3s ease both;
+  box-shadow: 0 32px 80px rgba(15,26,20,0.25);
+}
+@keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+.modal-header { padding: 24px 24px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; }
+.modal-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--muted); line-height: 1; transition: color 0.2s; padding: 0; }
+.modal-close:hover { color: var(--text); }
+.modal-body { padding: 20px 24px 24px; }
+.modal-field { margin-bottom: 14px; }
+.modal-label { font-size: 0.7rem; font-weight: 600; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+.modal-val { font-size: 0.9rem; font-weight: 500; }
+.modal-divider { height: 1px; background: var(--border); margin: 16px 0; }
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.status-select {
+  width: 100%; padding: 9px 12px; border-radius: 10px;
+  border: 1.5px solid var(--border); font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem; outline: none; transition: border-color 0.2s;
+  background: var(--cream); color: var(--text);
+}
+.status-select:focus { border-color: var(--green); }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+.btn-modal-save { flex: 1; background: var(--green); color: white; border: none; padding: 11px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; }
+.btn-modal-save:hover { background: var(--green-light); }
+.btn-modal-cancel { padding: 11px 20px; border-radius: 10px; border: 1.5px solid var(--border); background: none; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; }
+.btn-modal-cancel:hover { border-color: var(--green); color: var(--green); }
+
+/* Analytics page */
+.analytics-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 24px; }
+.analytics-card { background: var(--white); border-radius: 16px; padding: 22px; border: 1.5px solid var(--border); }
+.analytics-card-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 14px; }
+
+/* Therapist page */
+.therapist-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+.therapist-admin-card { background: var(--white); border-radius: 16px; padding: 22px; border: 1.5px solid var(--border); transition: all 0.3s; }
+.therapist-admin-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.ta-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.ta-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--green-pale); color: var(--green); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+.ta-name { font-weight: 700; font-size: 0.95rem; }
+.ta-spec { font-size: 0.75rem; color: var(--muted); }
+.ta-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; padding-top: 14px; border-top: 1px solid var(--border); }
+.ta-stat { text-align: center; }
+.ta-stat-num { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; color: var(--green); }
+.ta-stat-lbl { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--green-pale); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 2000;
+  background: var(--dark); color: white;
+  padding: 12px 20px; border-radius: 12px;
+  font-size: 0.82rem; font-weight: 500;
+  display: flex; align-items: center; gap: 8px;
+  transform: translateY(80px); opacity: 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast-icon { font-size: 1rem; }
+
+/* Mini sparkline */
+.sparkline { display: flex; align-items: flex-end; gap: 2px; height: 30px; }
+.spark-bar { flex: 1; border-radius: 2px 2px 0 0; background: var(--green-pale); transition: background 0.2s; }
+.spark-bar:hover { background: var(--green); }
+</style>
+</head>
+<body>
+<!-- ADMIN LOGIN GATE -->
+<div class="admin-login-gate" id="adminLoginGate">
+  <div class="admin-login-box">
+    <div class="admin-login-icon">🔐</div>
+    <div class="admin-login-title">Physio<span>Core</span></div>
+    <div class="admin-login-sub">ADMIN DASHBOARD · SECURE ACCESS</div>
+    <div class="admin-login-error" id="adminLoginError">Invalid credentials. Please try again.</div>
+    <div class="admin-field">
+      <label class="admin-label">Admin Email</label>
+      <input class="admin-input" type="email" id="adminEmail" placeholder="admin@physiocore.in">
+    </div>
+    <div class="admin-field">
+      <label class="admin-label">Password</label>
+      <input class="admin-input" type="password" id="adminPwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    </div>
+    <button class="admin-login-btn" onclick="doAdminLogin()">Access Dashboard →</button>
+    <div class="admin-hint">
+      <p>📧 admin@physiocore.in<br>🔑 admin@2024<br><br>📧 superadmin@physiocore.in<br>🔑 physio#super</p>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="mainApp" style="display:none">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo">Physio<span>Core</span></div>
+      <div class="logo-tag">Admin Dashboard</div>
+    </div>
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" onclick="showPage('overview', this)"><span class="nav-icon">📊</span> Overview</div>
+    <div class="nav-item" onclick="showPage('bookings', this)"><span class="nav-icon">📅</span> Bookings <span class="nav-badge" id="navBadge">0</span></div>
+    <div class="nav-section">Manage</div>
+    <div class="nav-item" onclick="showPage('therapists', this)"><span class="nav-icon">👨‍⚕️</span> Therapists</div>
+    <div class="nav-item" onclick="showPage('analytics', this)"><span class="nav-icon">📈</span> Analytics</div>
+    <div class="nav-section">System</div>
+    <div class="nav-item" onclick="showPage('settings', this)"><span class="nav-icon">⚙️</span> Settings</div>
+    <div class="sidebar-footer">
+      <div class="nav-item" onclick="adminLogout()" style="margin-bottom:10px;color:rgba(255,100,100,0.6)"><span class="nav-icon">🚪</span> Logout</div>
+      <div class="admin-user">
+        <div class="admin-avatar">AC</div>
+        <div>
+          <div class="admin-name">Admin Console</div>
+          <div class="admin-role">Super Admin</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="page-title" id="pageTitle">Overview</div>
+      <div class="topbar-right">
+        <div class="topbar-search">
+          <span style="color:var(--muted);font-size:0.85rem">🔍</span>
+          <input type="text" placeholder="Search bookings, patients..." id="searchInput" oninput="filterBookings()">
+        </div>
+        <button class="btn-seed" onclick="seedDemoData()">+ Add Demo Data</button>
+        <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+        <div class="notif-btn" id="notifBtn">🔔<div class="notif-dot"></div></div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- OVERVIEW PAGE -->
+      <div class="page active" id="page-overview">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Total Bookings</div>
+            <div class="kpi-value" id="kpiTotal">0</div>
+            <div class="kpi-change up" id="kpiTotalChange">—</div>
+            <div class="kpi-icon">📅</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Revenue (Est.)</div>
+            <div class="kpi-value" id="kpiRevenue">₹0</div>
+            <div class="kpi-change up" id="kpiRevChange">—</div>
+            <div class="kpi-icon">💰</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Confirmed</div>
+            <div class="kpi-value" id="kpiConfirmed">0</div>
+            <div class="kpi-change up">Active sessions</div>
+            <div class="kpi-icon">✅</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Pending</div>
+            <div class="kpi-value" id="kpiPending">0</div>
+            <div class="kpi-change down" id="kpiPendingChange">Needs review</div>
+            <div class="kpi-icon">⏳</div>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="chart-card">
+            <div class="chart-title">Bookings by Service</div>
+            <div class="chart-sub">Session volume distribution</div>
+            <div class="bar-chart" id="serviceBarChart"></div>
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap" id="serviceBarLabels"></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Status Breakdown</div>
+            <div class="chart-sub">Current booking states</div>
+            <div class="donut-wrap">
+              <svg class="donut-svg" width="100" height="100" viewBox="0 0 100 100" id="donutSvg">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#F0EDE7" stroke-width="14"/>
+                <circle id="donutConfirmed" cx="50" cy="50" r="38" fill="none" stroke="#1E6B45" stroke-width="14" stroke-dasharray="239" stroke-dashoffset="0" transform="rotate(-90 50 50)" stroke-linecap="butt"/>
+                <circle id="donutPending" cx="50" cy="50" r="38" fill="none" stroke="#F59E0B" stroke-width="14" stroke-dasharray="239" stroke-dashoffset="0" transform="rotate(-90 50 50)" stroke-linecap="butt"/>
+                <circle id="donutCompleted" cx="50" cy="50" r="38" fill="none" stroke="#3B82F6" stroke-width="14" stroke-dasharray="239" stroke-dashoffset="0" transform="rotate(-90 50 50)" stroke-linecap="butt"/>
+                <text x="50" y="54" text-anchor="middle" font-family="Playfair Display" font-size="16" font-weight="700" fill="#1A2B22" id="donutCenter">0</text>
+              </svg>
+              <div class="donut-legend" id="donutLegend"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">Recent Bookings</div>
+            <button class="filter-tab active" onclick="showPage('bookings', document.querySelector('.nav-item:nth-child(5)'))">View All →</button>
+          </div>
+          <div id="recentTableBody"></div>
+        </div>
+      </div>
+
+      <!-- BOOKINGS PAGE -->
+      <div class="page" id="page-bookings">
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">All Bookings</div>
+            <div class="filter-tabs">
+              <div class="filter-tab active" onclick="filterStatus('all',this)">All</div>
+              <div class="filter-tab" onclick="filterStatus('confirmed',this)">Confirmed</div>
+              <div class="filter-tab" onclick="filterStatus('pending',this)">Pending</div>
+              <div class="filter-tab" onclick="filterStatus('completed',this)">Completed</div>
+              <div class="filter-tab" onclick="filterStatus('cancelled',this)">Cancelled</div>
+            </div>
+          </div>
+          <div id="fullTableBody"></div>
+        </div>
+      </div>
+
+      <!-- THERAPISTS PAGE -->
+      <div class="page" id="page-therapists">
+        <div class="therapist-grid" id="therapistGrid"></div>
+      </div>
+
+      <!-- ANALYTICS PAGE -->
+      <div class="page" id="page-analytics">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Avg. Session Value</div>
+            <div class="kpi-value" id="avgVal">₹0</div>
+            <div class="kpi-change up">Per booking</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Top Service</div>
+            <div class="kpi-value" style="font-size:1.1rem;margin-top:4px" id="topService">—</div>
+            <div class="kpi-change up">By volume</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Top Therapist</div>
+            <div class="kpi-value" style="font-size:1rem;margin-top:4px" id="topTherapist">—</div>
+            <div class="kpi-change up">By bookings</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Completion Rate</div>
+            <div class="kpi-value" id="completionRate">0%</div>
+            <div class="kpi-change up">vs all sessions</div>
+          </div>
+        </div>
+        <div class="analytics-grid">
+          <div class="analytics-card">
+            <div class="analytics-card-title">Bookings by Therapist</div>
+            <div id="therapistBreakdown"></div>
+          </div>
+          <div class="analytics-card">
+            <div class="analytics-card-title">Service Popularity</div>
+            <div id="serviceBreakdown"></div>
+          </div>
+          <div class="analytics-card">
+            <div class="analytics-card-title">Revenue by Service</div>
+            <div id="revenueBreakdown"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS PAGE -->
+      <div class="page" id="page-settings">
+        <div style="max-width:540px">
+          <div class="chart-card" style="margin-bottom:16px">
+            <div class="chart-title" style="margin-bottom:16px">Data Management</div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <button class="btn-seed" style="justify-content:flex-start;width:fit-content" onclick="seedDemoData()">🌱 Seed 10 Demo Bookings</button>
+              <button class="btn-export" style="justify-content:flex-start;width:fit-content" onclick="exportCSV()">⬇ Export All as CSV</button>
+              <button onclick="clearAll()" style="background:#FEE2E2;color:#DC2626;border:1.5px solid #FECACA;padding:8px 16px;border-radius:10px;font-family:DM Sans,sans-serif;font-weight:600;font-size:0.82rem;cursor:pointer;width:fit-content">🗑 Clear All Bookings</button>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title" style="margin-bottom:8px">Storage Status</div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.7" id="storageInfo"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Booking Details</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">✓</span>
+  <span id="toastMsg">Action completed</span>
+</div>
+
+</div><!-- end .app -->
+
+<script>
+// ── ADMIN AUTH ────────────────────────────────────────────
+const ADMIN_CREDS = [
+  { email: 'admin@physiocore.in',      password: 'admin@2024',   name: 'Admin',      role: 'Admin' },
+  { email: 'superadmin@physiocore.in', password: 'physio#super', name: 'Super Admin', role: 'Super Admin' }
+];
+const ADMIN_SESSION = 'physiocore_admin_session';
+
+function doAdminLogin() {
+  const email = document.getElementById('adminEmail').value.trim().toLowerCase();
+  const pwd   = document.getElementById('adminPwd').value;
+  const admin = ADMIN_CREDS.find(a => a.email === email && a.password === pwd);
+  if (!admin) { document.getElementById('adminLoginError').classList.add('show'); return; }
+  sessionStorage.setItem(ADMIN_SESSION, JSON.stringify(admin));
+  document.getElementById('adminLoginGate').classList.add('hidden');
+  document.getElementById('mainApp').style.display = 'flex';
+  document.querySelector('.admin-name').textContent = admin.name;
+  document.querySelector('.admin-role').textContent = admin.role;
+  document.querySelector('.admin-avatar').textContent = admin.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+  renderOverview();
+}
+
+// Check existing session
+(function() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem(ADMIN_SESSION));
+    if (s) {
+      document.getElementById('adminLoginGate').classList.add('hidden');
+      document.getElementById('mainApp').style.display = 'flex';
+      document.querySelector('.admin-name').textContent = s.name;
+      document.querySelector('.admin-role').textContent = s.role;
+      document.querySelector('.admin-avatar').textContent = s.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+      renderOverview();
+    }
+  } catch(e) {}
+})();
+
+function adminLogout() {
+  if (!confirm('Log out of admin dashboard?')) return;
+  sessionStorage.removeItem(ADMIN_SESSION);
+  document.getElementById('adminLoginGate').classList.remove('hidden');
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('adminEmail').value = '';
+  document.getElementById('adminPwd').value = '';
+  document.getElementById('adminLoginError').classList.remove('show');
+}
+
+const STORAGE_KEY = 'physiocore_bookings';
+
+function getBookings() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+}
+function saveBookings(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+// ── State ─────────────────────────────────────────────────
+let activeFilter = 'all';
+let searchQuery = '';
+let currentBookingId = null;
+
+// ── Nav ───────────────────────────────────────────────────
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+  const titles = { overview:'Overview', bookings:'Bookings', therapists:'Therapists', analytics:'Analytics', settings:'Settings' };
+  document.getElementById('pageTitle').textContent = titles[name] || name;
+  if (name === 'overview') renderOverview();
+  if (name === 'bookings') renderFullTable();
+  if (name === 'therapists') renderTherapists();
+  if (name === 'analytics') renderAnalytics();
+  if (name === 'settings') renderSettings();
+}
+
+// ── Toast ─────────────────────────────────────────────────
+function showToast(msg, icon='✓') {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toastIcon').textContent = icon;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Seed demo data ────────────────────────────────────────
+const demoNames  = ['Priya Sharma','Rahul Verma','Anjali Singh','Kiran Patel','Mohammed Ali','Sneha Reddy','Vikram Nair','Pooja Mehta','Aryan Kumar','Divya Iyer'];
+const demoSvcs   = [['Manual Therapy','₹1,800','60 min'],['Sports Rehab','₹2,200','75 min'],['Post-Surgery','₹2,500','90 min'],['Dry Needling','₹1,500','45 min'],['Chronic Pain','₹2,000','60 min'],['Online Consult','₹800','30 min']];
+const demoTherapists = ['Dr. Sarah Chen','Dr. Arjun Mehta','Dr. Priya Nair'];
+const demoStatuses = ['confirmed','confirmed','confirmed','pending','completed','cancelled'];
+const demoDates  = ['Mar 11','Mar 12','Mar 13','Mar 14','Mar 15','Mar 16','Mar 17','Mar 18'];
+const demoTimes  = ['8:00 AM','10:00 AM','11:00 AM','2:00 PM','3:00 PM','5:00 PM'];
+
+function seedDemoData() {
+  const existing = getBookings();
+  const newOnes = Array.from({length:10}, (_,i) => {
+    const svc = demoSvcs[Math.floor(Math.random()*demoSvcs.length)];
+    const name = demoNames[i % demoNames.length];
+    return {
+      id: 'PHYSIO-#' + (Math.floor(Math.random()*9000)+1000),
+      service: svc[0], price: svc[1], duration: svc[2],
+      date: demoDates[Math.floor(Math.random()*demoDates.length)],
+      time: demoTimes[Math.floor(Math.random()*demoTimes.length)],
+      therapist: demoTherapists[Math.floor(Math.random()*demoTherapists.length)],
+      name, phone: '+91 9' + Math.floor(100000000 + Math.random()*900000000),
+      email: name.toLowerCase().replace(' ','.')+Math.floor(10+Math.random()*90)+'@gmail.com',
+      notes: '',
+      status: demoStatuses[Math.floor(Math.random()*demoStatuses.length)],
+      bookedAt: new Date(Date.now() - Math.random()*7*86400000).toISOString()
+    };
+  });
+  saveBookings([...newOnes, ...existing]);
+  refresh();
+  showToast('10 demo bookings added ✓', '🌱');
+}
+
+// ── Table renderer ─────────────────────────────────────────
+function getFilteredBookings() {
+  let data = getBookings();
+  if (activeFilter !== 'all') data = data.filter(b => b.status === activeFilter);
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    data = data.filter(b =>
+      b.name?.toLowerCase().includes(q) ||
+      b.id?.toLowerCase().includes(q) ||
+      b.service?.toLowerCase().includes(q) ||
+      b.therapist?.toLowerCase().includes(q)
+    );
+  }
+  return data;
+}
+
+function badgeHtml(status) {
+  const map = { confirmed:'badge-confirmed', pending:'badge-pending', completed:'badge-completed', cancelled:'badge-cancelled' };
+  const icons = { confirmed:'✓', pending:'⏳', completed:'★', cancelled:'✕' };
+  return `<span class="badge ${map[status]||'badge-pending'}">${icons[status]||'·'} ${status}</span>`;
+}
+
+function initials(name='') { return name.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2) || '?'; }
+
+function tableHtml(bookings, limit=null) {
+  if (!bookings.length) return `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">No bookings yet</div><div class="empty-desc">Click "Add Demo Data" to populate, or complete a booking on the main site.</div></div>`;
+  const rows = (limit ? bookings.slice(0,limit) : bookings).map(b => `
+    <tr onclick="openModal('${b.id}')">
+      <td><span class="booking-id">${b.id}</span></td>
+      <td><div class="patient-cell"><div class="patient-avatar">${initials(b.name)}</div><div><div class="patient-name">${b.name||'—'}</div><div class="patient-contact">${b.phone||'—'}</div></div></div></td>
+      <td>${b.service}</td>
+      <td>${b.date} · ${b.time}</td>
+      <td>${b.therapist}</td>
+      <td><span style="font-family:DM Mono,monospace;font-size:0.8rem;color:var(--green);font-weight:600">${b.price}</span></td>
+      <td>${badgeHtml(b.status)}</td>
+      <td style="white-space:nowrap">
+        <button class="action-btn" onclick="event.stopPropagation();openModal('${b.id}')">Edit</button>
+        <button class="action-btn del" onclick="event.stopPropagation();deleteBooking('${b.id}')" style="margin-left:4px">✕</button>
+      </td>
+    </tr>`).join('');
+  return `<table><thead><tr><th>ID</th><th>Patient</th><th>Service</th><th>Date & Time</th><th>Therapist</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function renderOverview() {
+  const data = getBookings();
+  const confirmed  = data.filter(b=>b.status==='confirmed').length;
+  const pending    = data.filter(b=>b.status==='pending').length;
+  const completed  = data.filter(b=>b.status==='completed').length;
+  const cancelled  = data.filter(b=>b.status==='cancelled').length;
+  const revenue    = data.reduce((s,b)=>s+(parseInt((b.price||'0').replace(/[^\d]/g,''))||0),0);
+
+  document.getElementById('kpiTotal').textContent     = data.length;
+  document.getElementById('kpiRevenue').textContent   = '₹'+revenue.toLocaleString('en-IN');
+  document.getElementById('kpiConfirmed').textContent = confirmed;
+  document.getElementById('kpiPending').textContent   = pending;
+  document.getElementById('kpiTotalChange').textContent = data.length ? `↑ ${data.length} total records` : 'No data yet';
+  document.getElementById('kpiRevChange').textContent   = revenue ? `₹${(revenue/100).toFixed(0)} avg/session` : '—';
+  document.getElementById('navBadge').textContent = data.length;
+
+  // Bar chart by service
+  const svcMap = {};
+  data.forEach(b => svcMap[b.service] = (svcMap[b.service]||0) + 1);
+  const maxV = Math.max(1,...Object.values(svcMap));
+  const colors = ['#1E6B45','#2E8B5A','#C8E63C','#D4EAD9','#6B8070','#0F1A14'];
+  const svcEntries = Object.entries(svcMap).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('serviceBarChart').innerHTML = svcEntries.map(([s,v],i) =>
+    `<div class="bar-wrap"><div class="bar" style="height:${Math.max(8,(v/maxV)*100)}%;background:${colors[i%colors.length]}"><div class="bar-tooltip">${s}: ${v}</div></div></div>`
+  ).join('') || '<div style="color:var(--muted);font-size:0.8rem;padding:20px">No data</div>';
+  document.getElementById('serviceBarLabels').innerHTML = svcEntries.map(([s],i) =>
+    `<div style="display:flex;align-items:center;gap:5px;font-size:0.65rem;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:${colors[i%colors.length]}"></div>${s}</div>`
+  ).join('');
+
+  // Donut chart
+  const total = data.length || 1;
+  const circ = 239;
+  const statusData = [
+    { label:'Confirmed', count: confirmed, color: '#1E6B45', id:'donutConfirmed' },
+    { label:'Pending',   count: pending,   color: '#F59E0B', id:'donutPending'   },
+    { label:'Completed', count: completed, color: '#3B82F6', id:'donutCompleted' },
+    { label:'Cancelled', count: cancelled, color: '#E63C3C', id:'donutCancelled' }
+  ];
+  let offset = 0;
+  // Rebuild donut arcs
+  const svg = document.getElementById('donutSvg');
+  svg.querySelectorAll('.dynamic-arc').forEach(e=>e.remove());
+  statusData.forEach(s => {
+    const len = (s.count/total)*circ;
+    const el = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    el.setAttribute('class','dynamic-arc');
+    el.setAttribute('cx','50'); el.setAttribute('cy','50'); el.setAttribute('r','38');
+    el.setAttribute('fill','none'); el.setAttribute('stroke',s.color); el.setAttribute('stroke-width','14');
+    el.setAttribute('stroke-dasharray',`${len} ${circ-len}`);
+    el.setAttribute('stroke-dashoffset', -offset + circ/4);
+    el.setAttribute('transform','rotate(-90 50 50)');
+    svg.insertBefore(el, document.getElementById('donutCenter'));
+    offset += len;
+  });
+  document.getElementById('donutCenter').textContent = data.length;
+  document.getElementById('donutLegend').innerHTML = statusData.map(s =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${s.color}"></div>${s.label}<span class="legend-pct">${s.count}</span></div>`
+  ).join('');
+
+  // Recent table
+  document.getElementById('recentTableBody').innerHTML = tableHtml(data, 5);
+}
+
+function renderFullTable() {
+  document.getElementById('fullTableBody').innerHTML = tableHtml(getFilteredBookings());
+}
+
+function filterStatus(f, el) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderFullTable();
+}
+
+function filterBookings() {
+  searchQuery = document.getElementById('searchInput').value;
+  if (document.getElementById('page-bookings').classList.contains('active')) renderFullTable();
+}
+
+// ── Modal ──────────────────────────────────────────────────
+function openModal(id) {
+  const data = getBookings();
+  const b = data.find(x => x.id === id);
+  if (!b) return;
+  currentBookingId = id;
+  document.getElementById('modalTitle').textContent = b.id;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="modal-grid">
+      <div class="modal-field"><div class="modal-label">Patient</div><div class="modal-val">${b.name||'—'}</div></div>
+      <div class="modal-field"><div class="modal-label">Phone</div><div class="modal-val">${b.phone||'—'}</div></div>
+      <div class="modal-field"><div class="modal-label">Email</div><div class="modal-val" style="font-size:0.78rem">${b.email||'—'}</div></div>
+      <div class="modal-field"><div class="modal-label">Booked At</div><div class="modal-val" style="font-size:0.78rem">${b.bookedAt ? new Date(b.bookedAt).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}) : '—'}</div></div>
+    </div>
+    <div class="modal-divider"></div>
+    <div class="modal-grid">
+      <div class="modal-field"><div class="modal-label">Service</div><div class="modal-val">${b.service}</div></div>
+      <div class="modal-field"><div class="modal-label">Price</div><div class="modal-val" style="color:var(--green);font-family:DM Mono,monospace">${b.price}</div></div>
+      <div class="modal-field"><div class="modal-label">Date</div><div class="modal-val">${b.date}</div></div>
+      <div class="modal-field"><div class="modal-label">Time</div><div class="modal-val">${b.time}</div></div>
+      <div class="modal-field"><div class="modal-label">Therapist</div><div class="modal-val">${b.therapist}</div></div>
+      <div class="modal-field"><div class="modal-label">Duration</div><div class="modal-val">${b.duration}</div></div>
+    </div>
+    ${b.notes ? `<div class="modal-divider"></div><div class="modal-field"><div class="modal-label">Patient Notes</div><div class="modal-val" style="font-size:0.82rem;color:var(--muted);line-height:1.6">${b.notes}</div></div>` : ''}
+    <div class="modal-divider"></div>
+    <div class="modal-field">
+      <div class="modal-label">Update Status</div>
+      <select class="status-select" id="modalStatus">
+        <option value="confirmed"  ${b.status==='confirmed'?'selected':''}>✓ Confirmed</option>
+        <option value="pending"    ${b.status==='pending'?'selected':''}>⏳ Pending</option>
+        <option value="completed"  ${b.status==='completed'?'selected':''}>★ Completed</option>
+        <option value="cancelled"  ${b.status==='cancelled'?'selected':''}>✕ Cancelled</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-save" onclick="saveModal()">Save Changes</button>
+      <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function saveModal() {
+  const newStatus = document.getElementById('modalStatus').value;
+  const data = getBookings();
+  const idx = data.findIndex(x => x.id === currentBookingId);
+  if (idx > -1) { data[idx].status = newStatus; saveBookings(data); }
+  closeModal();
+  refresh();
+  showToast('Booking updated successfully', '✓');
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modalOverlay')) return;
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function deleteBooking(id) {
+  if (!confirm('Delete this booking?')) return;
+  const data = getBookings().filter(b => b.id !== id);
+  saveBookings(data);
+  refresh();
+  showToast('Booking deleted', '🗑');
+}
+
+// ── Therapists ─────────────────────────────────────────────
+function renderTherapists() {
+  const data = getBookings();
+  const therapists = [
+    { name:'Dr. Sarah Chen',  spec:'Manual Therapy · Sports Rehab', icon:'👩‍⚕️' },
+    { name:'Dr. Arjun Mehta', spec:'Neuro Rehab · Post-Surgery',    icon:'👨‍⚕️' },
+    { name:'Dr. Priya Nair',  spec:'Chronic Pain · Dry Needling',   icon:'👩‍⚕️' }
+  ];
+  document.getElementById('therapistGrid').innerHTML = therapists.map(t => {
+    const mine = data.filter(b => b.therapist === t.name);
+    const confirmed  = mine.filter(b=>b.status==='confirmed').length;
+    const completed  = mine.filter(b=>b.status==='completed').length;
+    const revenue    = mine.reduce((s,b)=>s+(parseInt((b.price||'0').replace(/[^\d]/g,''))||0),0);
+    return `
+    <div class="therapist-admin-card">
+      <div class="ta-header">
+        <div class="ta-avatar">${t.icon}</div>
+        <div><div class="ta-name">${t.name}</div><div class="ta-spec">${t.spec}</div></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+        ${mine.slice(0,4).map(b=>`<span class="badge badge-${b.status}" style="font-size:0.62rem">${b.service}</span>`).join('')}
+        ${mine.length>4?`<span style="font-size:0.7rem;color:var(--muted)">+${mine.length-4} more</span>`:''}
+        ${!mine.length?'<span style="font-size:0.75rem;color:var(--muted)">No bookings yet</span>':''}
+      </div>
+      <div class="ta-stats">
+        <div class="ta-stat"><div class="ta-stat-num">${mine.length}</div><div class="ta-stat-lbl">Total</div></div>
+        <div class="ta-stat"><div class="ta-stat-num">${confirmed}</div><div class="ta-stat-lbl">Active</div></div>
+        <div class="ta-stat"><div class="ta-stat-num">₹${(revenue/1000).toFixed(0)}K</div><div class="ta-stat-lbl">Revenue</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Analytics ──────────────────────────────────────────────
+function renderAnalytics() {
+  const data = getBookings();
+  if (!data.length) {
+    ['therapistBreakdown','serviceBreakdown','revenueBreakdown'].forEach(id => {
+      document.getElementById(id).innerHTML = '<p style="font-size:0.82rem;color:var(--muted);padding:12px 0">No data yet — add demo bookings.</p>';
+    });
+    return;
+  }
+  const revenue = data.reduce((s,b)=>s+(parseInt((b.price||'0').replace(/[^\d]/g,''))||0),0);
+  const avgVal = Math.round(revenue / data.length);
+  const svcMap = {}; data.forEach(b => svcMap[b.service] = (svcMap[b.service]||0)+1);
+  const topSvc = Object.entries(svcMap).sort((a,b)=>b[1]-a[1])[0];
+  const therapistMap = {}; data.forEach(b => therapistMap[b.therapist] = (therapistMap[b.therapist]||0)+1);
+  const topT = Object.entries(therapistMap).sort((a,b)=>b[1]-a[1])[0];
+  const completed = data.filter(b=>b.status==='completed').length;
+  document.getElementById('avgVal').textContent = '₹' + avgVal.toLocaleString('en-IN');
+  document.getElementById('topService').textContent = topSvc ? topSvc[0] : '—';
+  document.getElementById('topTherapist').textContent = topT ? topT[0].split(' ').slice(-1)[0] : '—';
+  document.getElementById('completionRate').textContent = Math.round((completed/data.length)*100) + '%';
+
+  const bar = (map, colorFn) => {
+    const maxV = Math.max(1,...Object.values(map));
+    return Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([k,v]) =>
+      `<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <span style="font-size:0.78rem;font-weight:500">${k}</span>
+          <span style="font-size:0.75rem;color:var(--muted);font-family:DM Mono,monospace">${v}</span>
+        </div>
+        <div style="height:8px;border-radius:4px;background:var(--green-pale);overflow:hidden">
+          <div style="height:100%;width:${(v/maxV)*100}%;background:${colorFn(k)};border-radius:4px;transition:width 0.6s ease"></div>
+        </div>
+      </div>`
+    ).join('');
+  };
+  document.getElementById('therapistBreakdown').innerHTML = bar(therapistMap, ()=>'#1E6B45');
+
+  document.getElementById('serviceBreakdown').innerHTML = bar(svcMap, ()=>'#C8E63C');
+
+  const revMap = {}; data.forEach(b => revMap[b.service] = (revMap[b.service]||0)+(parseInt((b.price||'0').replace(/[^\d]/g,''))||0));
+  const maxRev = Math.max(1,...Object.values(revMap));
+  document.getElementById('revenueBreakdown').innerHTML = Object.entries(revMap).sort((a,b)=>b[1]-a[1]).map(([k,v]) =>
+    `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="font-size:0.78rem;font-weight:500">${k}</span>
+        <span style="font-size:0.75rem;color:var(--green);font-family:DM Mono,monospace;font-weight:600">₹${v.toLocaleString('en-IN')}</span>
+      </div>
+      <div style="height:8px;border-radius:4px;background:var(--green-pale);overflow:hidden">
+        <div style="height:100%;width:${(v/maxRev)*100}%;background:#3B82F6;border-radius:4px;transition:width 0.6s ease"></div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+// ── Settings ───────────────────────────────────────────────
+function renderSettings() {
+  const data = getBookings();
+  const bytes = JSON.stringify(data).length;
+  document.getElementById('storageInfo').innerHTML = `
+    <b>Records stored:</b> ${data.length}<br>
+    <b>Storage size:</b> ~${(bytes/1024).toFixed(1)} KB<br>
+    <b>Storage key:</b> <code style="background:var(--green-pale);padding:2px 6px;border-radius:4px;font-family:DM Mono,monospace;font-size:0.75rem">physiocore_bookings</code><br>
+    <b>Note:</b> Data is stored in your browser's localStorage and is shared with the main booking site (physio-website.html) when opened in the same browser.
+  `;
+}
+
+// ── Export CSV ─────────────────────────────────────────────
+function exportCSV() {
+  const data = getBookings();
+  if (!data.length) { showToast('No data to export', '⚠️'); return; }
+  const headers = ['ID','Name','Phone','Email','Service','Price','Duration','Date','Time','Therapist','Status','Booked At'];
+  const rows = data.map(b => [b.id,b.name,b.phone,b.email,b.service,b.price,b.duration,b.date,b.time,b.therapist,b.status,b.bookedAt].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'physiocore-bookings-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  showToast('CSV exported successfully', '⬇');
+}
+
+// ── Clear all ──────────────────────────────────────────────
+function clearAll() {
+  if (!confirm('Delete ALL bookings? This cannot be undone.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  refresh();
+  showToast('All bookings cleared', '🗑');
+}
+
+// ── Refresh ────────────────────────────────────────────────
+function refresh() {
+  const active = document.querySelector('.page.active')?.id?.replace('page-','');
+  if (active === 'overview')   renderOverview();
+  if (active === 'bookings')   renderFullTable();
+  if (active === 'therapists') renderTherapists();
+  if (active === 'analytics')  renderAnalytics();
+  if (active === 'settings')   renderSettings();
+  document.getElementById('navBadge').textContent = getBookings().length;
+}
+
+// ── Init ───────────────────────────────────────────────────
+renderOverview();
+// Poll for new bookings from main site every 3 seconds
+setInterval(() => {
+  if (document.getElementById('page-overview').classList.contains('active')) renderOverview();
+}, 3000);
+</script>
+</body>
+</html>
