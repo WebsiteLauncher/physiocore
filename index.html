@@ -1603,46 +1603,66 @@
     document.getElementById('cPrice').textContent = bookingData.price;
   }
 
-  function confirmBooking() {
-    document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.step-item').forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
+  // ── FIREBASE REST API ─────────────────────────────────────
+  const FB_PROJECT = 'nikshithaphysiocore';
+  const FB_API_KEY  = 'AIzaSyCx66BrTmvEtEoEsP_Q3q2tXbpI4Jy3sEs';
+  const FS_BASE = 'https://firestore.googleapis.com/v1/projects/' + FB_PROJECT + '/databases/(default)/documents';
+
+  async function saveToFirestore(record) {
+    const fields = {};
+    Object.entries(record).forEach(function(kv){ fields[kv[0]] = { stringValue: String(kv[1]) }; });
+    try {
+      const res = await fetch(FS_BASE + '/bookings?key=' + FB_API_KEY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: fields })
+      });
+      if (res.ok) { console.log('Saved to Firestore'); }
+      else { const t = await res.text(); console.warn('Firestore error:', t); }
+    } catch(e) { console.warn('Firestore unavailable, using localStorage only'); }
+    const existing = JSON.parse(localStorage.getItem('physiocore_bookings') || '[]');
+    existing.unshift(record);
+    localStorage.setItem('physiocore_bookings', JSON.stringify(existing));
+  }
+
+  async function confirmBooking() {
+    document.querySelectorAll('.form-panel').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('.step-item').forEach(function(s){ s.classList.remove('active'); s.classList.add('done'); });
     const id = 'PHYSIO-#' + (Math.floor(Math.random()*9000)+1000);
     document.getElementById('bookingId').textContent = id;
     document.getElementById('successScreen').classList.add('active');
     const inputs = document.querySelectorAll('.form-input');
-    const firstName = inputs[0]?.value || getCurrentUser()?.name?.split(' ')[0] || 'Patient';
-    const lastName  = inputs[1]?.value || '';
-    const phone     = inputs[2]?.value || getCurrentUser()?.phone || '';
-    const email     = inputs[3]?.value || getCurrentUser()?.email || '';
-    const notes     = document.querySelector('.form-textarea')?.value || '';
+    const cu = getCurrentUser();
+    const firstName = (inputs[0] && inputs[0].value) || (cu && cu.name && cu.name.split(' ')[0]) || 'Patient';
+    const lastName  = (inputs[1] && inputs[1].value) || '';
+    const phone     = (inputs[2] && inputs[2].value) || (cu && cu.phone) || '';
+    const email     = (inputs[3] && inputs[3].value) || (cu && cu.email) || '';
+    const nt        = document.querySelector('.form-textarea');
+    const notes     = nt ? nt.value : '';
+    const fullName  = (firstName + ' ' + lastName).trim() || (cu && cu.name) || 'Patient';
     const record = {
-      id, service: bookingData.service, price: bookingData.price,
+      id: id, service: bookingData.service, price: bookingData.price,
       duration: bookingData.dur, date: bookingData.date || 'Mar 15',
       time: bookingData.time || '10:00 AM', therapist: bookingData.therapist,
-      name: (firstName + ' ' + lastName).trim() || getCurrentUser()?.name || 'Patient',
-      phone, email, notes, status: 'confirmed',
-      bookedAt: new Date().toISOString()
+      name: fullName, phone: phone, email: email, notes: notes,
+      status: 'confirmed', bookedAt: new Date().toISOString()
     };
-    const existing = JSON.parse(localStorage.getItem('physiocore_bookings') || '[]');
-    existing.unshift(record);
-    localStorage.setItem('physiocore_bookings', JSON.stringify(existing));
-    // WhatsApp confirmation link
+    await saveToFirestore(record);
     const waPhone = (phone || '919000000000').replace(/[^0-9]/g,'') || '919000000000';
     const waMsg = encodeURIComponent(
-      `✅ *Booking Confirmed — PhysioCore*\n\n` +
-      `📋 *ID:* ${id}\n` +
-      `👤 *Patient:* ${record.name}\n` +
-      `🩺 *Service:* ${record.service}\n` +
-      `📅 *Date & Time:* ${record.date} at ${record.time}\n` +
-      `👨‍⚕️ *Therapist:* ${record.therapist}\n` +
-      `⏱ *Duration:* ${record.duration}\n` +
-      `💰 *Amount:* ${record.price}\n\n` +
-      `📍 PhysioCore, Jubilee Hills, Hyderabad\n` +
-      `📞 +91 40 2345 6789\n\n` +
-      `_Please arrive 10 minutes early. Reply CANCEL to cancel._`
+      'Booking Confirmed - PhysioCore' +
+      '%0AID: ' + id +
+      '%0APatient: ' + fullName +
+      '%0AService: ' + record.service +
+      '%0ADate: ' + record.date + ' at ' + record.time +
+      '%0ATherapist: ' + record.therapist +
+      '%0AAmount: ' + record.price +
+      '%0APhysioCore, Jubilee Hills, Hyderabad'
     );
-    document.getElementById('waConfirmBtn').href = `https://wa.me/${waPhone}?text=${waMsg}`;
+    const waBtn = document.getElementById('waConfirmBtn');
+    if (waBtn) waBtn.href = 'https://wa.me/' + waPhone + '?text=' + waMsg;
   }
+
 
   function resetBooking() {
     document.getElementById('successScreen').classList.remove('active');
