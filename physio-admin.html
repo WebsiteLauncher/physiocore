@@ -181,54 +181,78 @@ tbody tr:hover{background:var(--cream);}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:3px;}
 </style>
-</head>
-<body>
 
 <!-- LOGIN GATE -->
 <div id="gate">
   <div class="lbox">
     <div class="llogo">Physio<span>Core</span></div>
-    <div class="ltag">Admin Portal &mdash; Firebase Auth</div>
-    <label class="llbl">Email address</label>
-    <input class="linp" type="email" id="lEmail" placeholder="admin@physiocore.in">
-    <label class="llbl">Password</label>
-    <input class="linp" type="password" id="lPwd" placeholder="Password">
-    <button class="lbtn" id="lBtn" onclick="doLogin()">Sign In to Dashboard</button>
-    <div class="lerr" id="lErr"></div>
-    <div class="ldiv"><span>new here?</span></div>
-    <div class="slnk">No account? <a onclick="toggleSignup()">Create admin account</a></div>
-    <div id="sigSec" style="display:none;margin-top:16px;border-top:1px solid var(--bdr);padding-top:16px;">
-      <p style="font-size:0.85rem;font-weight:600;margin-bottom:12px;">Create Admin Account</p>
-      <input class="linp" type="text" id="sName" placeholder="Full name">
-      <input class="linp" type="email" id="sEmail" placeholder="Email address">
-      <input class="linp" type="password" id="sPwd" placeholder="Password (min 6 chars)">
-      <button class="lbtn" id="sBtn" onclick="doSignup()">Create Account</button>
-      <div class="lerr" id="sErr"></div>
+    <div class="ltag">Admin Portal &mdash; PhysioCore</div>
+
+    <!-- SIGN IN PANEL -->
+    <div id="panelLogin">
+      <label class="llbl">Email address</label>
+      <input class="linp" type="email" id="lEmail" placeholder="admin@physiocore.in" onkeydown="if(event.key==='Enter')doLogin()">
+      <label class="llbl">Password</label>
+      <input class="linp" type="password" id="lPwd" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="lbtn" id="loginBtn" onclick="doLogin()">Sign In to Dashboard</button>
+      <div class="lerr on" id="lerr" style="display:none"></div>
+      <div style="text-align:center;margin-top:10px;font-size:0.78rem;color:var(--muted)">
+        Forgot password? <a style="color:var(--green);font-weight:600;cursor:pointer;text-decoration:none" onclick="showPanel('Reset')">Reset it</a>
+      </div>
+      <div class="ldiv"><span>new here?</span></div>
+      <div class="slnk">No account? <a onclick="showPanel('Signup')">Create admin account</a></div>
+    </div>
+
+    <!-- SIGN UP PANEL -->
+    <div id="panelSignup" style="display:none">
+      <div style="font-weight:600;font-size:0.9rem;margin-bottom:14px">Create Admin Account</div>
+      <label class="llbl">Full name</label>
+      <input class="linp" type="text" id="sName" placeholder="Dr. Ambati Nikshith">
+      <label class="llbl">Email address</label>
+      <input class="linp" type="email" id="sEmail" placeholder="admin@physiocore.in">
+      <label class="llbl">Password (min 6 chars)</label>
+      <input class="linp" type="password" id="sPwd" placeholder="Create a strong password" onkeydown="if(event.key==='Enter')doSignup()">
+      <button class="lbtn" id="sigBtn" onclick="doSignup()">Create Account</button>
+      <div class="lerr on" id="serr" style="display:none"></div>
+      <div class="ldiv"><span>already have one?</span></div>
+      <div class="slnk"><a onclick="showPanel('Login')">&#8592; Back to Sign In</a></div>
+    </div>
+
+    <!-- RESET PASSWORD PANEL -->
+    <div id="panelReset" style="display:none">
+      <div style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;line-height:1.6">Enter your email and we will send a password reset link.</div>
+      <label class="llbl">Email address</label>
+      <input class="linp" type="email" id="rEmail" placeholder="admin@physiocore.in" onkeydown="if(event.key==='Enter')doReset()">
+      <button class="lbtn" id="resetBtn" onclick="doReset()">Send Reset Link</button>
+      <div class="lerr on" id="rerr" style="display:none"></div>
+      <div id="rok" style="display:none;background:#D4EAD9;color:#1E6B45;border-radius:10px;padding:10px 14px;font-size:0.82rem;margin-top:10px"></div>
+      <div style="text-align:center;margin-top:12px">
+        <a style="font-size:0.78rem;color:var(--green);font-weight:600;cursor:pointer;text-decoration:none" onclick="showPanel('Login')">&#8592; Back to Sign In</a>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- APP -->
+<!-- APP SHELL -->
 <div class="app">
-  <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="slogo">
       <div class="logo">Physio<span>Core</span></div>
       <div class="ltg">Admin Dashboard</div>
     </div>
     <div class="nsec">Main</div>
-    <div class="nitem active" onclick="showPage('ov',this)"><span class="nic">&#128202;</span>Overview</div>
-    <div class="nitem" onclick="showPage('bk',this)"><span class="nic">&#128197;</span>Bookings<span class="nbadge" id="nbadge">0</span></div>
+    <div class="ni active" onclick="showPg('ov',this)"><span class="nic">&#128202;</span> Overview</div>
+    <div class="ni" onclick="showPg('bk',this)"><span class="nic">&#128197;</span> Bookings <span class="nbadge" id="navBadge">0</span></div>
     <div class="nsec">Manage</div>
-    <div class="nitem" onclick="showPage('th',this)"><span class="nic">&#128104;&#8205;&#9877;</span>Therapists</div>
-    <div class="nitem" onclick="showPage('an',this)"><span class="nic">&#128200;</span>Analytics</div>
+    <div class="ni" onclick="showPg('th',this)"><span class="nic">&#128104;&#8205;&#9877;&#65039;</span> Therapists</div>
+    <div class="ni" onclick="showPg('an',this)"><span class="nic">&#128200;</span> Analytics</div>
     <div class="nsec">System</div>
-    <div class="nitem" onclick="showPage('st',this)"><span class="nic">&#9881;</span>Settings</div>
+    <div class="ni" onclick="showPg('st',this)"><span class="nic">&#9881;&#65039;</span> Settings</div>
     <div class="sfooter">
       <div class="ause">
-        <div class="aav" id="aAv">?</div>
+        <div class="aav" id="aav">?</div>
         <div>
-          <div class="aname" id="aName">Not signed in</div>
+          <div class="aname" id="anm">Not signed in</div>
           <div class="arole">Admin</div>
         </div>
       </div>
@@ -236,12 +260,11 @@ tbody tr:hover{background:var(--cream);}
     </div>
   </div>
 
-  <!-- MAIN -->
   <div class="main">
     <div class="topbar">
       <div class="ptitle" id="pgTitle">Overview</div>
       <div class="tright">
-        <span class="conn offline" id="connBadge"><span class="cdot"></span>&nbsp;Connecting...</span>
+        <span class="conn local" id="connBadge"><span class="cdot"></span>&nbsp;Connecting...</span>
         <div class="tsearch">
           <span style="color:var(--muted)">&#128269;</span>
           <input type="text" placeholder="Search patients, services..." id="srchInput" oninput="onSearch()">
@@ -254,40 +277,40 @@ tbody tr:hover{background:var(--cream);}
     <div class="content">
 
       <!-- OVERVIEW -->
-      <div class="page active" id="page-ov">
+      <div class="pg active" id="pg-ov">
         <div class="kgrid">
-          <div class="kcard"><div class="klbl">Total Bookings</div><div class="kval" id="kTot">--</div><div class="ksub" id="kTotS">--</div><div class="kic">&#128197;</div></div>
-          <div class="kcard"><div class="klbl">Revenue Est.</div><div class="kval" id="kRev">--</div><div class="ksub" id="kRevS">--</div><div class="kic">&#128176;</div></div>
-          <div class="kcard"><div class="klbl">Confirmed</div><div class="kval" id="kConf">--</div><div class="ksub">Active sessions</div><div class="kic">&#9989;</div></div>
-          <div class="kcard"><div class="klbl">Pending</div><div class="kval" id="kPend">--</div><div class="ksub">Needs review</div><div class="kic">&#9203;</div></div>
+          <div class="kcard"><div class="klbl">Total Bookings</div><div class="kval" id="kT">--</div><div class="ksub" id="kTs">--</div><div class="kic">&#128197;</div></div>
+          <div class="kcard"><div class="klbl">Revenue Est.</div><div class="kval" id="kR">--</div><div class="ksub" id="kRs">--</div><div class="kic">&#128176;</div></div>
+          <div class="kcard"><div class="klbl">Confirmed</div><div class="kval" id="kC">--</div><div class="ksub">Active sessions</div><div class="kic">&#9989;</div></div>
+          <div class="kcard"><div class="klbl">Pending</div><div class="kval" id="kP">--</div><div class="ksub">Needs review</div><div class="kic">&#9203;</div></div>
         </div>
         <div class="crow">
           <div class="ccard">
             <div class="ctitle">Bookings by Service</div>
             <div class="csub">Session volume distribution</div>
-            <div class="bchart" id="svcChart"><div style="color:var(--muted);font-size:0.8rem;padding:20px">Loading...</div></div>
+            <div class="bchart" id="svcChart"></div>
             <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap" id="svcLbls"></div>
           </div>
           <div class="ccard">
             <div class="ctitle">Status Breakdown</div>
             <div class="csub">Current booking states</div>
             <div class="dwrap">
-              <svg width="100" height="100" viewBox="0 0 100 100" id="donutSvg">
+              <svg width="100" height="100" viewBox="0 0 100 100" id="dSvg">
                 <circle cx="50" cy="50" r="38" fill="none" stroke="#F0EDE7" stroke-width="14"/>
-                <text id="dCtr" x="50" y="54" text-anchor="middle" font-family="Playfair Display" font-size="16" font-weight="700" fill="#1A2B22">--</text>
+                <text id="dCtr" x="50" y="54" text-anchor="middle" font-family="Playfair Display" font-size="16" font-weight="700" fill="#1A2B22">0</text>
               </svg>
-              <div class="dleg" id="dLeg"><div style="font-size:0.8rem;color:var(--muted)">Loading...</div></div>
+              <div class="dleg" id="dLeg"></div>
             </div>
           </div>
         </div>
         <div class="tcard">
-          <div class="thead"><div class="ttitle">Recent Bookings</div><button class="ftab active" onclick="showPage('bk',document.querySelectorAll('.nitem')[1])">View All &rarr;</button></div>
-          <div id="recTable"><div class="empty"><div class="eic">&#9203;</div><div class="ettl">Loading...</div></div></div>
+          <div class="thead"><div class="ttitle">Recent Bookings</div><button class="ftab active" onclick="showPg('bk',document.querySelectorAll('.ni')[1])">View All &rarr;</button></div>
+          <div id="recBody"></div>
         </div>
       </div>
 
       <!-- BOOKINGS -->
-      <div class="page" id="page-bk">
+      <div class="pg" id="pg-bk">
         <div class="tcard">
           <div class="thead">
             <div class="ttitle">All Bookings</div>
@@ -299,17 +322,17 @@ tbody tr:hover{background:var(--cream);}
               <div class="ftab" onclick="setFilter('cancelled',this)">Cancelled</div>
             </div>
           </div>
-          <div id="fullTable"><div class="empty"><div class="eic">&#9203;</div><div class="ettl">Loading...</div></div></div>
+          <div id="fullBody"></div>
         </div>
       </div>
 
       <!-- THERAPISTS -->
-      <div class="page" id="page-th">
-        <div class="tgrid" id="thGrid"><div style="color:var(--muted);padding:20px">Loading...</div></div>
+      <div class="pg" id="pg-th">
+        <div class="tgrid" id="thGrid"></div>
       </div>
 
       <!-- ANALYTICS -->
-      <div class="page" id="page-an">
+      <div class="pg" id="pg-an">
         <div class="kgrid">
           <div class="kcard"><div class="klbl">Avg Session Value</div><div class="kval" id="aAvg">--</div><div class="ksub">Per booking</div></div>
           <div class="kcard"><div class="klbl">Top Service</div><div class="kval" style="font-size:1rem;margin-top:4px" id="aTopS">--</div><div class="ksub">By volume</div></div>
@@ -317,31 +340,30 @@ tbody tr:hover{background:var(--cream);}
           <div class="kcard"><div class="klbl">Completion Rate</div><div class="kval" id="aComp">--</div><div class="ksub">vs all sessions</div></div>
         </div>
         <div class="agrid">
-          <div class="acard"><div class="attl">By Therapist</div><div id="aTh">--</div></div>
-          <div class="acard"><div class="attl">By Service</div><div id="aSv">--</div></div>
-          <div class="acard"><div class="attl">Revenue by Service</div><div id="aRv">--</div></div>
+          <div class="acard"><div class="attl">By Therapist</div><div id="aTh"></div></div>
+          <div class="acard"><div class="attl">By Service</div><div id="aSv"></div></div>
+          <div class="acard"><div class="attl">Revenue by Service</div><div id="aRv"></div></div>
         </div>
       </div>
 
       <!-- SETTINGS -->
-      <div class="page" id="page-st">
+      <div class="pg" id="pg-st">
         <div style="max-width:560px">
           <div class="ccard" style="margin-bottom:16px">
             <div class="ctitle" style="margin-bottom:8px">Firebase Connection</div>
             <div id="fbStat" style="font-size:0.82rem;color:var(--muted);line-height:1.9">Checking...</div>
-            <br>
-            <button class="bref" onclick="loadData()" style="margin-top:4px">&#8635; Re-sync from Firestore</button>
+            <br><button class="bref" onclick="loadData()" style="margin-top:4px">&#8635; Re-sync from Firestore</button>
           </div>
           <div class="ccard" style="margin-bottom:16px">
             <div class="ctitle" style="margin-bottom:12px">Data Actions</div>
             <div style="display:flex;flex-direction:column;gap:10px">
               <button class="bexp" style="width:fit-content" onclick="exportCSV()">&#8681; Export All as CSV</button>
-              <button onclick="clearLocal()" style="background:#FEE2E2;color:#DC2626;border:1.5px solid #FECACA;padding:8px 16px;border-radius:10px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.82rem;cursor:pointer;width:fit-content">&#128465; Clear Local Cache Only</button>
+              <button onclick="clearLocal()" style="background:#FEE2E2;color:#DC2626;border:1.5px solid #FECACA;padding:8px 16px;border-radius:10px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.82rem;cursor:pointer;width:fit-content">&#128465; Clear Local Cache</button>
             </div>
           </div>
           <div class="ccard">
-            <div class="ctitle" style="margin-bottom:8px">Important: Firestore Security</div>
-            <div style="font-size:0.82rem;color:var(--muted);line-height:1.7">Your Firestore is currently in <strong>test mode</strong> (open access for 30 days). Before going live, update your security rules at <strong>console.firebase.google.com</strong> &rarr; Firestore &rarr; Rules to restrict read/write access.</div>
+            <div class="ctitle" style="margin-bottom:8px">Firestore Security</div>
+            <p style="font-size:0.82rem;color:var(--muted);line-height:1.7">Your Firestore is in <strong>test mode</strong>. Before going live, go to <strong>Firebase Console &rarr; Firestore &rarr; Rules</strong> and restrict read/write access to authenticated users only.</p>
           </div>
         </div>
       </div>
@@ -351,13 +373,13 @@ tbody tr:hover{background:var(--cream);}
 </div>
 
 <!-- MODAL -->
-<div class="mov" id="mov" onclick="closeModal(event)">
+<div class="mov" id="mOv" onclick="closeModal(event)">
   <div class="modal">
     <div class="mhdr">
-      <div class="mttl" id="mTitle">Booking Details</div>
+      <div class="mttl" id="mTtl">Booking Details</div>
       <button class="mcls" onclick="closeModal()">&#10005;</button>
     </div>
-    <div class="mbody" id="mBody"></div>
+    <div class="mbdy" id="mBdy"></div>
   </div>
 </div>
 
@@ -365,74 +387,81 @@ tbody tr:hover{background:var(--cream);}
 <div class="toast" id="toast"><span id="tIc">&#10003;</span>&nbsp;<span id="tMsg">Done</span></div>
 
 <script>
-// =========================================================
-// FIREBASE CONFIG
-// =========================================================
-var PROJ = 'nikshithaphysiocore';
-var AKEY = 'AIzaSyCx66BrTmvEtEoEsP_Q3q2tXbpI4Jy3sEs';
-var FS   = 'https://firestore.googleapis.com/v1/projects/' + PROJ + '/databases/(default)/documents';
-var AUTH = 'https://identitytoolkit.googleapis.com/v1/accounts';
+var KEY = 'AIzaSyCx66BrTmvEtEoEsP_Q3q2tXbpI4Jy3sEs';
+var PID = 'nikshithaphysiocore';
+var FS  = 'https://firestore.googleapis.com/v1/projects/' + PID + '/databases/(default)/documents';
+var AU  = 'https://identitytoolkit.googleapis.com/v1/accounts';
+var cu = null, allB = [], isLive = false, flt = 'all', srch = '', curId = null, curDoc = null;
 
-// =========================================================
-// STATE
-// =========================================================
-var cu = null;        // current user
-var allB = [];        // all bookings
-var isLive = false;   // firestore connected?
-var curFilter = 'all';
-var curSearch = '';
-var curId = null;
-var curDoc = null;
-
-// =========================================================
-// TOAST
-// =========================================================
 function toast(msg, icon) {
-  document.getElementById('tMsg').textContent = msg;
-  document.getElementById('tIc').innerHTML = icon || '&#10003;';
   var t = document.getElementById('toast');
-  t.classList.add('show');
-  setTimeout(function() { t.classList.remove('show'); }, 3000);
+  var ti = document.getElementById('tIc');
+  var tm = document.getElementById('tMsg');
+  if (ti) ti.innerHTML = icon || '&#10003;';
+  if (tm) tm.textContent = msg;
+  if (t)  { t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 3000); }
 }
 
-// =========================================================
-// AUTH
-// =========================================================
-function toggleSignup() {
-  var s = document.getElementById('sigSec');
-  s.style.display = s.style.display === 'none' ? 'block' : 'none';
+function fbErr(msg) {
+  if (!msg) return 'Something went wrong. Try again.';
+  if (msg.indexOf('INVALID_LOGIN_CREDENTIALS') >= 0 || msg.indexOf('INVALID_PASSWORD') >= 0 || msg.indexOf('EMAIL_NOT_FOUND') >= 0) return 'Incorrect email or password.';
+  if (msg.indexOf('EMAIL_EXISTS')       >= 0) return 'This email is already registered.';
+  if (msg.indexOf('WEAK_PASSWORD')      >= 0) return 'Password must be at least 6 characters.';
+  if (msg.indexOf('INVALID_EMAIL')      >= 0) return 'Please enter a valid email address.';
+  if (msg.indexOf('TOO_MANY_ATTEMPTS')  >= 0) return 'Too many attempts. Try again later.';
+  if (msg.indexOf('MISSING_EMAIL')      >= 0) return 'Please enter your email address.';
+  return msg;
 }
 
 function showErr(id, msg) {
   var el = document.getElementById(id);
+  if (!el) return;
   el.textContent = msg;
-  el.classList.add('show');
+  el.style.display = 'block';
+}
+function clearErr(id) {
+  var el = document.getElementById(id);
+  if (el) { el.textContent = ''; el.style.display = 'none'; }
+}
+function setBusy(id, busy, label) {
+  var btn = document.getElementById(id);
+  if (!btn) return;
+  btn.disabled = busy;
+  btn.innerHTML = busy
+    ? '<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:adm-spin 0.7s linear infinite;vertical-align:middle;margin-right:6px"></span>Please wait...'
+    : label;
+}
+
+function showPanel(name) {
+  ['panelLogin','panelSignup','panelReset'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.style.display = (id === 'panel' + name) ? 'block' : 'none';
+  });
+  ['lerr','serr','rerr'].forEach(clearErr);
+  var rok = document.getElementById('rok');
+  if (rok) rok.style.display = 'none';
 }
 
 async function doLogin() {
   var email = document.getElementById('lEmail').value.trim();
   var pwd   = document.getElementById('lPwd').value;
-  if (!email || !pwd) { showErr('lErr', 'Please fill in both fields.'); return; }
-  var btn = document.getElementById('lBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span> Signing in...';
+  clearErr('lerr');
+  if (!email || !pwd) { showErr('lerr', 'Please enter your email and password.'); return; }
+  setBusy('loginBtn', true, 'Sign In to Dashboard');
   try {
-    var res = await fetch(AUTH + ':signInWithPassword?key=' + AKEY, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    var res = await fetch(AU + ':signInWithPassword?key=' + KEY, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, password: pwd, returnSecureToken: true })
     });
-    var data = await res.json();
-    if (!res.ok) throw new Error(data.error ? data.error.message : 'Login failed');
-    cu = { email: data.email, name: data.displayName || email.split('@')[0], token: data.idToken };
-    sessionStorage.setItem('pca_user', JSON.stringify(cu));
+    var d = await res.json();
+    if (!res.ok) throw new Error(d.error ? d.error.message : 'Login failed');
+    cu = { email: d.email, name: d.displayName || email.split('@')[0], token: d.idToken };
+    sessionStorage.setItem('pca', JSON.stringify(cu));
     onLoggedIn();
   } catch(e) {
-    var msg = (e.message && e.message.indexOf('INVALID') >= 0) ? 'Incorrect email or password.' : e.message;
-    showErr('lErr', msg);
+    showErr('lerr', fbErr(e.message));
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Sign In to Dashboard';
+    setBusy('loginBtn', false, 'Sign In to Dashboard');
   }
 }
 
@@ -440,476 +469,350 @@ async function doSignup() {
   var name  = document.getElementById('sName').value.trim();
   var email = document.getElementById('sEmail').value.trim();
   var pwd   = document.getElementById('sPwd').value;
-  if (!name || !email || !pwd) { showErr('sErr', 'All fields required.'); return; }
-  if (pwd.length < 6) { showErr('sErr', 'Password must be at least 6 characters.'); return; }
-  var btn = document.getElementById('sBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span> Creating...';
+  clearErr('serr');
+  if (!name || !email || !pwd) { showErr('serr', 'All fields are required.'); return; }
+  if (pwd.length < 6)          { showErr('serr', 'Password must be at least 6 characters.'); return; }
+  setBusy('sigBtn', true, 'Create Account');
   try {
-    var res = await fetch(AUTH + ':signUp?key=' + AKEY, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    var res = await fetch(AU + ':signUp?key=' + KEY, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, password: pwd, returnSecureToken: true })
     });
-    var data = await res.json();
-    if (!res.ok) throw new Error(data.error ? data.error.message : 'Signup failed');
-    // Set display name
-    await fetch(AUTH + ':update?key=' + AKEY, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken: data.idToken, displayName: name, returnSecureToken: true })
+    var d = await res.json();
+    if (!res.ok) throw new Error(d.error ? d.error.message : 'Signup failed');
+    await fetch(AU + ':update?key=' + KEY, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: d.idToken, displayName: name })
     });
-    cu = { email: data.email, name: name, token: data.idToken };
-    sessionStorage.setItem('pca_user', JSON.stringify(cu));
+    cu = { email: d.email, name: name, token: d.idToken };
+    sessionStorage.setItem('pca', JSON.stringify(cu));
     toast('Account created!', '&#127881;');
     onLoggedIn();
   } catch(e) {
-    var msg = (e.message && e.message.indexOf('EMAIL_EXISTS') >= 0) ? 'Email already registered.' : e.message;
-    showErr('sErr', msg);
+    showErr('serr', fbErr(e.message));
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Create Account';
+    setBusy('sigBtn', false, 'Create Account');
+  }
+}
+
+async function doReset() {
+  var email = document.getElementById('rEmail').value.trim();
+  clearErr('rerr');
+  if (!email) { showErr('rerr', 'Please enter your email address.'); return; }
+  setBusy('resetBtn', true, 'Send Reset Link');
+  try {
+    var res = await fetch(AU + ':sendOobCode?key=' + KEY, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requestType: 'PASSWORD_RESET', email: email })
+    });
+    var d = await res.json();
+    if (!res.ok) throw new Error(d.error ? d.error.message : 'Reset failed');
+    var ok = document.getElementById('rok');
+    if (ok) { ok.textContent = 'Reset email sent! Check your inbox.'; ok.style.display = 'block'; }
+    document.getElementById('rEmail').value = '';
+  } catch(e) {
+    showErr('rerr', fbErr(e.message));
+  } finally {
+    setBusy('resetBtn', false, 'Send Reset Link');
   }
 }
 
 function doLogout() {
   if (!confirm('Sign out?')) return;
-  sessionStorage.removeItem('pca_user');
+  sessionStorage.removeItem('pca');
   cu = null; allB = [];
-  document.getElementById('gate').classList.remove('hidden');
+  var gate = document.getElementById('gate');
+  if (gate) gate.classList.remove('hidden');
+  showPanel('Login');
 }
 
 function onLoggedIn() {
-  document.getElementById('gate').classList.add('hidden');
+  var gate = document.getElementById('gate');
+  if (gate) gate.classList.add('hidden');
   var n = cu.name || cu.email;
-  document.getElementById('aName').textContent = n;
-  document.getElementById('aAv').textContent = n.charAt(0).toUpperCase();
+  var anm = document.getElementById('anm');
+  var aav = document.getElementById('aav');
+  if (anm) anm.textContent = n;
+  if (aav) aav.textContent = n.charAt(0).toUpperCase();
   loadData();
 }
 
-// Auto-restore session on page load
-(function() {
+(function(){
   try {
-    var saved = JSON.parse(sessionStorage.getItem('pca_user'));
-    if (saved && saved.token) { cu = saved; onLoggedIn(); }
+    var s = JSON.parse(sessionStorage.getItem('pca'));
+    if (s && s.token) { cu = s; onLoggedIn(); }
   } catch(e) {}
 })();
 
-// =========================================================
-// FIRESTORE
-// =========================================================
-function fsToRecord(doc) {
-  var f = doc.fields || {};
-  var r = {};
-  Object.keys(f).forEach(function(k) {
-    r[k] = f[k].stringValue !== undefined ? f[k].stringValue :
-            f[k].integerValue !== undefined ? f[k].integerValue : '';
-  });
+function fsToRec(doc) {
+  var f = doc.fields || {}, r = {};
+  Object.keys(f).forEach(function(k){ r[k] = f[k].stringValue || f[k].integerValue || ''; });
   r._doc = doc.name ? doc.name.split('/').pop() : '';
   return r;
 }
 
-function setConnBadge(live) {
+function setConn(live) {
   var b = document.getElementById('connBadge');
-  b.className = 'conn ' + (live ? 'live' : 'offline');
-  b.innerHTML = '<span class="cdot"></span>&nbsp;' + (live ? 'Live &mdash; Firestore' : 'Offline &mdash; Local cache');
+  if (!b) return;
+  b.className = 'conn ' + (live ? 'live' : 'local');
+  b.innerHTML = '<span class="cdot"></span> ' + (live ? 'Live &mdash; Firestore' : 'Offline &mdash; Local cache');
 }
 
 async function loadData() {
   try {
-    var headers = {};
-    if (cu && cu.token) headers['Authorization'] = 'Bearer ' + cu.token;
-    var res = await fetch(FS + '/bookings?key=' + AKEY + '&pageSize=300', { headers: headers });
+    var h = {};
+    if (cu && cu.token) h['Authorization'] = 'Bearer ' + cu.token;
+    var res = await fetch(FS + '/bookings?key=' + KEY + '&pageSize=300', { headers: h });
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    var data = await res.json();
-    var docs = data.documents || [];
-    allB = docs.map(fsToRecord).sort(function(a, b) {
-      return new Date(b.bookedAt || 0) - new Date(a.bookedAt || 0);
-    });
-    isLive = true;
-    setConnBadge(true);
-    // Merge any local-only bookings not yet in Firestore
-    var local = JSON.parse(localStorage.getItem('physiocore_bookings') || '[]');
-    var fsIds = {};
-    allB.forEach(function(b) { fsIds[b.id] = true; });
-    local.forEach(function(lb) { if (!fsIds[lb.id]) allB.unshift(lb); });
+    var d = await res.json();
+    allB = (d.documents || []).map(fsToRec).sort(function(a,b){ return new Date(b.bookedAt||0) - new Date(a.bookedAt||0); });
+    isLive = true; setConn(true);
+    var loc = JSON.parse(localStorage.getItem('physiocore_bookings') || '[]');
+    var seen = {}; allB.forEach(function(b){ if(b.id) seen[b.id]=true; });
+    loc.forEach(function(lb){ if(lb.id && !seen[lb.id]) allB.unshift(lb); });
   } catch(e) {
-    console.warn('Firestore load failed:', e.message);
-    isLive = false;
-    setConnBadge(false);
+    console.warn('Firestore:', e.message);
+    isLive = false; setConn(false);
     allB = JSON.parse(localStorage.getItem('physiocore_bookings') || '[]');
   }
-  document.getElementById('nbadge').textContent = allB.length;
-  refresh();
-  updateFbStatus();
+  var nb = document.getElementById('navBadge'); if (nb) nb.textContent = allB.length;
+  refresh(); updSettings();
 }
 
-async function patchStatus(docId, newStatus) {
-  if (!docId) return;
-  try {
-    var h = { 'Content-Type': 'application/json' };
-    if (cu && cu.token) h['Authorization'] = 'Bearer ' + cu.token;
-    await fetch(FS + '/bookings/' + docId + '?updateMask.fieldPaths=status&key=' + AKEY, {
-      method: 'PATCH', headers: h,
-      body: JSON.stringify({ fields: { status: { stringValue: newStatus } } })
-    });
-  } catch(e) { console.warn('Patch failed:', e); }
-  // Update local cache too
-  var local = JSON.parse(localStorage.getItem('physiocore_bookings') || '[]');
-  local.forEach(function(b) { if (b._doc === docId || b.id === curId) b.status = newStatus; });
-  localStorage.setItem('physiocore_bookings', JSON.stringify(local));
+async function patchStatus(docId, bookingId, newStatus) {
+  if (docId) {
+    try {
+      var h = { 'Content-Type': 'application/json' };
+      if (cu && cu.token) h['Authorization'] = 'Bearer ' + cu.token;
+      await fetch(FS + '/bookings/' + docId + '?updateMask.fieldPaths=status&key=' + KEY, {
+        method: 'PATCH', headers: h,
+        body: JSON.stringify({ fields: { status: { stringValue: newStatus } } })
+      });
+    } catch(e) { console.warn('Patch:', e); }
+  }
+  allB.forEach(function(b){ if(b._doc===docId||b.id===bookingId) b.status=newStatus; });
+  var loc = JSON.parse(localStorage.getItem('physiocore_bookings')||'[]');
+  loc.forEach(function(b){ if(b._doc===docId||b.id===bookingId) b.status=newStatus; });
+  localStorage.setItem('physiocore_bookings', JSON.stringify(loc));
 }
 
 async function deleteDoc(docId, bookingId) {
-  if (!confirm('Delete this booking permanently?')) return;
+  if (!confirm('Delete this booking? Cannot be undone.')) return;
   if (docId) {
     try {
-      var h = {};
-      if (cu && cu.token) h['Authorization'] = 'Bearer ' + cu.token;
-      await fetch(FS + '/bookings/' + docId + '?key=' + AKEY, { method: 'DELETE', headers: h });
-    } catch(e) { console.warn('Delete failed:', e); }
+      var h = {}; if (cu && cu.token) h['Authorization'] = 'Bearer ' + cu.token;
+      await fetch(FS + '/bookings/' + docId + '?key=' + KEY, { method: 'DELETE', headers: h });
+    } catch(e) { console.warn('Delete:', e); }
   }
-  var local = JSON.parse(localStorage.getItem('physiocore_bookings') || '[]');
-  localStorage.setItem('physiocore_bookings', JSON.stringify(
-    local.filter(function(b) { return b.id !== bookingId && b._doc !== docId; })
-  ));
-  allB = allB.filter(function(b) { return b.id !== bookingId && b._doc !== docId; });
-  document.getElementById('nbadge').textContent = allB.length;
-  refresh();
-  toast('Booking deleted', '&#128465;');
+  allB = allB.filter(function(b){ return b._doc!==docId && b.id!==bookingId; });
+  var loc = JSON.parse(localStorage.getItem('physiocore_bookings')||'[]');
+  localStorage.setItem('physiocore_bookings', JSON.stringify(loc.filter(function(b){ return b._doc!==docId && b.id!==bookingId; })));
+  var nb = document.getElementById('navBadge'); if (nb) nb.textContent = allB.length;
+  refresh(); toast('Booking deleted','&#128465;');
 }
 
-// =========================================================
-// RENDER HELPERS
-// =========================================================
-function getFiltered() {
-  var data = allB.slice();
-  if (curFilter !== 'all') data = data.filter(function(b) { return b.status === curFilter; });
-  if (curSearch) {
-    var q = curSearch.toLowerCase();
-    data = data.filter(function(b) {
-      return (b.name + b.id + b.service + b.therapist + b.email).toLowerCase().indexOf(q) >= 0;
-    });
-  }
-  return data;
+function updSettings() {
+  var el = document.getElementById('fbStat'); if (!el) return;
+  el.innerHTML = '<strong>Project:</strong> ' + PID + '<br>' +
+    '<strong>Status:</strong> ' + (isLive ? '&#128994; Connected to Firestore' : '&#128993; Using local cache') + '<br>' +
+    '<strong>Records:</strong> ' + allB.length + '<br>' +
+    '<strong>Signed in as:</strong> ' + (cu ? cu.email : '&mdash;');
+}
+
+var pgTitles = { ov:'Overview', bk:'Bookings', th:'Therapists', an:'Analytics', st:'Settings' };
+function showPg(name, el) {
+  document.querySelectorAll('.pg').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.ni').forEach(function(n){ n.classList.remove('active'); });
+  var pg = document.getElementById('pg-' + name); if (pg) pg.classList.add('active');
+  if (el) el.classList.add('active');
+  var pt = document.getElementById('pgTitle'); if (pt) pt.textContent = pgTitles[name]||name;
+  if (name==='ov') rOv(); if (name==='bk') rFull();
+  if (name==='th') rTh(); if (name==='an') rAn(); if (name==='st') updSettings();
+}
+function refresh() {
+  var a = document.querySelector('.pg.active'); if (!a) return;
+  var n = a.id.replace('pg-','');
+  if (n==='ov') rOv(); if (n==='bk') rFull(); if (n==='th') rTh(); if (n==='an') rAn();
 }
 
 function badge(s) {
-  var cls = { confirmed:'bc', pending:'bp', completed:'bd', cancelled:'bx' };
+  var cls = { confirmed:'bc', pending:'bp', completed:'bd2', cancelled:'bx' };
   var ico = { confirmed:'&#10003;', pending:'&#9203;', completed:'&#9733;', cancelled:'&#10005;' };
-  return '<span class="badge ' + (cls[s] || 'bp') + '">' + (ico[s] || '&middot;') + ' ' + (s || 'pending') + '</span>';
+  return '<span class="bdg '+(cls[s]||'bp')+'">'+(ico[s]||'&middot;')+' '+(s||'pending')+'</span>';
 }
-
-function ini(name) {
-  return ((name || '?').split(' ').map(function(w) { return w[0] || ''; }).join('').toUpperCase().slice(0,2)) || '?';
+function ini(name) { return (name||'?').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2)||'?'; }
+function getFiltered() {
+  var data = allB.slice();
+  if (flt!=='all') data = data.filter(function(b){ return b.status===flt; });
+  if (srch) { var q=srch.toLowerCase(); data=data.filter(function(b){ return ((b.name||'')+(b.id||'')+(b.service||'')+(b.therapist||'')+(b.email||'')).toLowerCase().indexOf(q)>=0; }); }
+  return data;
 }
 
 function buildTable(data, limit) {
-  if (!data.length) {
-    return '<div class="empty"><div class="eic">&#128219;</div><div class="ettl">No bookings found</div>' +
-           '<div style="font-size:0.82rem">Complete a booking on the main site, or check Firestore connection.</div></div>';
-  }
-  var rows = (limit ? data.slice(0, limit) : data).map(function(b) {
-    var did = b._doc || '';
-    var bid = b.id || '';
-    return '<tr onclick="openModal('' + bid + '','' + did + '')">' +
-      '<td><span class="bid">' + (bid || '--') + '</span></td>' +
-      '<td><div class="pcell"><div class="pav">' + ini(b.name) + '</div>' +
-        '<div><div class="pname">' + (b.name || '--') + '</div>' +
-        '<div class="pcon">' + (b.phone || b.email || '--') + '</div></div></div></td>' +
-      '<td>' + (b.service || '--') + '</td>' +
-      '<td>' + (b.date || '--') + ' &middot; ' + (b.time || '--') + '</td>' +
-      '<td>' + (b.therapist || '--') + '</td>' +
-      '<td><span style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--green);font-weight:600">' + (b.price || '--') + '</span></td>' +
-      '<td>' + badge(b.status) + '</td>' +
+  if (!data.length) return '<div class="empty"><div class="eic">&#128219;</div><div class="ettl">No bookings found</div><p style="font-size:0.82rem">Submit a booking from the main site, or check your Firestore connection.</p></div>';
+  var rows = (limit ? data.slice(0,limit) : data).map(function(b) {
+    var bid = (b.id||'').replace(/['"<>&]/g,'');
+    var did = (b._doc||'').replace(/['"<>&]/g,'');
+    return '<tr data-bid="' + bid + '" data-did="' + did + '" class="brow">' +
+      '<td><span class="bid">'+(b.id||'&mdash;')+'</span></td>' +
+      '<td><div class="pcell"><div class="pav">'+ini(b.name)+'</div><div><div class="pnm">'+(b.name||'&mdash;')+'</div><div class="pco">'+(b.phone||b.email||'&mdash;')+'</div></div></div></td>' +
+      '<td>'+(b.service||'&mdash;')+'</td>' +
+      '<td>'+(b.date||'&mdash;')+' &middot; '+(b.time||'&mdash;')+'</td>' +
+      '<td>'+(b.therapist||'&mdash;')+'</td>' +
+      '<td><span style="font-family:DM Mono,monospace;font-size:0.8rem;color:var(--green);font-weight:600">'+(b.price||'&mdash;')+'</span></td>' +
+      '<td>'+badge(b.status)+'</td>' +
       '<td style="white-space:nowrap">' +
-        '<button class="abtn" onclick="event.stopPropagation();openModal('' + bid + '','' + did + '')">Edit</button> ' +
-        '<button class="abtn del" onclick="event.stopPropagation();deleteDoc('' + did + '','' + bid + '')">&#10005;</button>' +
+        '<button class="ab ebtn" data-bid="' + bid + '" data-did="' + did + '">Edit</button> ' +
+        '<button class="ab del dbtn" data-bid="' + bid + '" data-did="' + did + '">&#10005;</button>' +
       '</td></tr>';
   }).join('');
   return '<table><thead><tr><th>ID</th><th>Patient</th><th>Service</th><th>Date &amp; Time</th><th>Therapist</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
 }
 
-// =========================================================
-// PAGE RENDERERS
-// =========================================================
-function renderOverview() {
-  var data = allB;
-  var conf = data.filter(function(b) { return b.status === 'confirmed'; }).length;
-  var pend = data.filter(function(b) { return b.status === 'pending'; }).length;
-  var comp = data.filter(function(b) { return b.status === 'completed'; }).length;
-  var canc = data.filter(function(b) { return b.status === 'cancelled'; }).length;
-  var rev  = data.reduce(function(s, b) { return s + (parseInt((b.price || '0').replace(/[^\d]/g,'')) || 0); }, 0);
-
-  document.getElementById('kTot').textContent  = data.length;
-  document.getElementById('kRev').textContent  = '&#8377;' + rev.toLocaleString('en-IN');
-  document.getElementById('kConf').textContent = conf;
-  document.getElementById('kPend').textContent = pend;
-  document.getElementById('kTotS').textContent = isLive ? 'Live from Firestore' : 'Local cache only';
-  document.getElementById('kRevS').textContent = data.length ? '&#8377;' + Math.round(rev / data.length).toLocaleString('en-IN') + ' avg/session' : '--';
-
-  // Bar chart
-  var sm = {};
-  data.forEach(function(b) { if (b.service) sm[b.service] = (sm[b.service] || 0) + 1; });
-  var colors = ['#1E6B45','#2E8B5A','#C8E63C','#D4EAD9','#6B8070','#0F1A14'];
-  var se = Object.keys(sm).map(function(k) { return [k, sm[k]]; }).sort(function(a,b) { return b[1]-a[1]; });
-  var mx = se.length ? se[0][1] : 1;
-  document.getElementById('svcChart').innerHTML = se.length
-    ? se.map(function(e, i) {
-        return '<div class="bwrap"><div class="bar" style="height:' + Math.max(8, (e[1]/mx)*100) + '%;background:' + colors[i % colors.length] + '"><div class="btip">' + e[0] + ': ' + e[1] + '</div></div></div>';
-      }).join('')
-    : '<div style="color:var(--muted);font-size:0.8rem;padding:20px">No data yet &mdash; complete a booking first</div>';
-  document.getElementById('svcLbls').innerHTML = se.map(function(e, i) {
-    return '<div style="display:flex;align-items:center;gap:5px;font-size:0.65rem;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:' + colors[i%colors.length] + '"></div>' + e[0] + '</div>';
-  }).join('');
-
-  // Donut
-  var sd = [
-    { l: 'Confirmed', c: conf, col: '#1E6B45' },
-    { l: 'Pending',   c: pend, col: '#F59E0B' },
-    { l: 'Completed', c: comp, col: '#3B82F6' },
-    { l: 'Cancelled', c: canc, col: '#E63C3C' }
-  ];
-  var circ = 239, tot = Math.max(1, data.length);
-  var svg = document.getElementById('donutSvg');
-  svg.querySelectorAll('.darc').forEach(function(e) { e.remove(); });
-  var off = 0;
-  sd.forEach(function(s) {
-    if (!s.c) return;
-    var len = (s.c / tot) * circ;
-    var el = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    el.className.baseVal = 'darc';
-    el.setAttribute('cx','50'); el.setAttribute('cy','50'); el.setAttribute('r','38');
-    el.setAttribute('fill','none'); el.setAttribute('stroke', s.col); el.setAttribute('stroke-width','14');
-    el.setAttribute('stroke-dasharray', len + ' ' + (circ - len));
-    el.setAttribute('stroke-dashoffset', circ/4 - off);
-    svg.insertBefore(el, document.getElementById('dCtr'));
-    off += len;
+function attachTableEvents(containerId) {
+  var c = document.getElementById(containerId);
+  if (!c) return;
+  c.querySelectorAll('.brow').forEach(function(tr) {
+    tr.addEventListener('click', function() { openModal(this.getAttribute('data-bid'), this.getAttribute('data-did')); });
   });
-  document.getElementById('dCtr').textContent = data.length;
-  document.getElementById('dLeg').innerHTML = sd.map(function(s) {
-    return '<div class="ditem"><div class="ddot" style="background:' + s.col + '"></div>' + s.l + '<span class="dpct">' + s.c + '</span></div>';
-  }).join('');
-  document.getElementById('recTable').innerHTML = buildTable(data, 5);
-}
-
-function renderBookings() {
-  document.getElementById('fullTable').innerHTML = buildTable(getFiltered());
-}
-
-function renderTherapists() {
-  var ts = [
-    { n: 'Dr. Sarah Chen',  s: 'Manual Therapy &middot; Sports Rehab', ic: '&#128105;&#8205;&#9877;' },
-    { n: 'Dr. Arjun Mehta', s: 'Neuro Rehab &middot; Post-Surgery',    ic: '&#128104;&#8205;&#9877;' },
-    { n: 'Dr. Priya Nair',  s: 'Chronic Pain &middot; Dry Needling',   ic: '&#128105;&#8205;&#9877;' }
-  ];
-  document.getElementById('thGrid').innerHTML = ts.map(function(t) {
-    var mine = allB.filter(function(b) { return b.therapist === t.n; });
-    var conf = mine.filter(function(b) { return b.status === 'confirmed'; }).length;
-    var rev  = mine.reduce(function(s, b) { return s + (parseInt((b.price||'0').replace(/[^\d]/g,''))||0); }, 0);
-    var badges = mine.slice(0,4).map(function(b) {
-      var c = b.status === 'confirmed' ? 'bc' : b.status === 'completed' ? 'bd' : b.status === 'cancelled' ? 'bx' : 'bp';
-      return '<span class="badge ' + c + '" style="font-size:0.62rem">' + (b.service || '?') + '</span>';
-    }).join('');
-    return '<div class="thcard">' +
-      '<div class="thh"><div class="thav">' + t.ic + '</div><div><div class="thn">' + t.n + '</div><div class="ths">' + t.s + '</div></div></div>' +
-      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">' + badges +
-        (mine.length > 4 ? '<span style="font-size:0.7rem;color:var(--muted)">+' + (mine.length-4) + ' more</span>' : '') +
-        (!mine.length ? '<span style="font-size:0.75rem;color:var(--muted)">No bookings yet</span>' : '') +
-      '</div>' +
-      '<div class="thsg">' +
-        '<div class="thsi"><div class="thsn">' + mine.length + '</div><div class="thsl">Total</div></div>' +
-        '<div class="thsi"><div class="thsn">' + conf + '</div><div class="thsl">Active</div></div>' +
-        '<div class="thsi"><div class="thsn">&#8377;' + (rev/1000).toFixed(0) + 'K</div><div class="thsl">Revenue</div></div>' +
-      '</div></div>';
-  }).join('');
-}
-
-function renderAnalytics() {
-  var data = allB;
-  var na = '<p style="font-size:0.82rem;color:var(--muted);padding:12px 0">No data yet.</p>';
-  if (!data.length) {
-    ['aTh','aSv','aRv'].forEach(function(id) { document.getElementById(id).innerHTML = na; });
-    ['aAvg','aTopS','aTopT','aComp'].forEach(function(id) { document.getElementById(id).textContent = '--'; });
-    return;
-  }
-  var rev = data.reduce(function(s,b) { return s + (parseInt((b.price||'0').replace(/[^\d]/g,''))||0); }, 0);
-  document.getElementById('aAvg').textContent = '&#8377;' + Math.round(rev/data.length).toLocaleString('en-IN');
-  var sm = {}, tm = {}, rm = {};
-  data.forEach(function(b) {
-    if (b.service)   { sm[b.service]   = (sm[b.service]   || 0) + 1; }
-    if (b.therapist) { tm[b.therapist] = (tm[b.therapist] || 0) + 1; }
-    if (b.service)   { rm[b.service]   = (rm[b.service]   || 0) + (parseInt((b.price||'0').replace(/[^\d]/g,''))||0); }
+  c.querySelectorAll('.ebtn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) { e.stopPropagation(); openModal(this.getAttribute('data-bid'), this.getAttribute('data-did')); });
   });
-  var topS = Object.keys(sm).sort(function(a,b) { return sm[b]-sm[a]; })[0];
-  var topT = Object.keys(tm).sort(function(a,b) { return tm[b]-tm[a]; })[0];
-  document.getElementById('aTopS').textContent = topS || '--';
-  document.getElementById('aTopT').textContent = topT ? topT.split(' ').pop() : '--';
-  var comp = data.filter(function(b) { return b.status === 'completed'; }).length;
-  document.getElementById('aComp').textContent = Math.round((comp/data.length)*100) + '%';
+  c.querySelectorAll('.dbtn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) { e.stopPropagation(); deleteDoc(this.getAttribute('data-did'), this.getAttribute('data-bid')); });
+  });
+}
 
-  function mkBars(map, color) {
-    var mx = Math.max.apply(null, Object.keys(map).map(function(k) { return map[k]; }));
-    return Object.keys(map).sort(function(a,b) { return map[b]-map[a]; }).map(function(k) {
-      return '<div style="margin-bottom:10px">' +
-        '<div style="display:flex;justify-content:space-between;margin-bottom:3px">' +
-          '<span style="font-size:0.78rem;font-weight:500">' + k + '</span>' +
-          '<span style="font-size:0.75rem;color:var(--muted);font-family:'DM Mono',monospace">' + map[k] + '</span>' +
-        '</div>' +
-        '<div style="height:8px;border-radius:4px;background:var(--gp)">' +
-          '<div style="height:100%;width:' + (map[k]/mx*100) + '%;background:' + color + ';border-radius:4px"></div>' +
-        '</div></div>';
-    }).join('');
+function rOv() {
+  var data=allB;
+  var conf=data.filter(function(b){return b.status==='confirmed';}).length;
+  var pend=data.filter(function(b){return b.status==='pending';}).length;
+  var comp=data.filter(function(b){return b.status==='completed';}).length;
+  var canc=data.filter(function(b){return b.status==='cancelled';}).length;
+  var rev=data.reduce(function(s,b){return s+(parseInt((b.price||'0').replace(/[^0-9]/g,''))||0);},0);
+  function set(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+  set('kT',data.length); set('kR','₹'+rev.toLocaleString('en-IN'));
+  set('kC',conf); set('kP',pend);
+  set('kTs',isLive?'↑ Live from Firestore':'⚠ Local cache');
+  set('kRs',rev&&data.length?'₹'+Math.round(rev/data.length).toLocaleString('en-IN')+' avg/session':'—');
+  var sm={};
+  data.forEach(function(b){if(b.service)sm[b.service]=(sm[b.service]||0)+1;});
+  var colors=['#1E6B45','#2E8B5A','#C8E63C','#D4EAD9','#6B8070','#0F1A14'];
+  var se=Object.keys(sm).map(function(k){return[k,sm[k]];}).sort(function(a,b){return b[1]-a[1];});
+  var mx=se.length?se[0][1]:1;
+  var sc=document.getElementById('svcChart');
+  if(sc) sc.innerHTML=se.length?se.map(function(e,i){return '<div class="bwrap"><div class="bar" style="height:'+Math.max(8,Math.round(e[1]/mx*100))+'%;background:'+colors[i%colors.length]+'"><div class="btp">'+e[0]+': '+e[1]+'</div></div></div>';}).join(''):'<div style="color:var(--mu);font-size:0.8rem;padding:20px">No data yet</div>';
+  var sl=document.getElementById('svcLbls');
+  if(sl) sl.innerHTML=se.map(function(e,i){return '<div style="display:flex;align-items:center;gap:5px;font-size:0.65rem;color:var(--mu)"><div style="width:8px;height:8px;border-radius:2px;background:'+colors[i%colors.length]+'"></div>'+e[0]+'</div>';}).join('');
+  var sd=[{l:'Confirmed',c:conf,col:'#1E6B45'},{l:'Pending',c:pend,col:'#F59E0B'},{l:'Completed',c:comp,col:'#3B82F6'},{l:'Cancelled',c:canc,col:'#E63C3C'}];
+  var circ=239,tot=Math.max(1,data.length),svg=document.getElementById('dSvg');
+  if(svg){
+    svg.querySelectorAll('.da').forEach(function(e){e.remove();});
+    var off=0;
+    sd.forEach(function(s){
+      var len=(s.c/tot)*circ,el=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      el.className.baseVal='da';
+      el.setAttribute('cx','50');el.setAttribute('cy','50');el.setAttribute('r','38');
+      el.setAttribute('fill','none');el.setAttribute('stroke',s.col);el.setAttribute('stroke-width','14');
+      el.setAttribute('stroke-dasharray',len+' '+(circ-len));
+      el.setAttribute('stroke-dashoffset',circ/4-off);
+      var ctr=document.getElementById('dCtr');if(ctr)svg.insertBefore(el,ctr);
+      off+=len;
+    });
+    var dc=document.getElementById('dCtr');if(dc)dc.textContent=data.length;
   }
-  document.getElementById('aTh').innerHTML = Object.keys(tm).length ? mkBars(tm, '#1E6B45') : na;
-  document.getElementById('aSv').innerHTML = Object.keys(sm).length ? mkBars(sm, '#C8E63C') : na;
-
-  if (Object.keys(rm).length) {
-    var mxR = Math.max.apply(null, Object.keys(rm).map(function(k) { return rm[k]; }));
-    document.getElementById('aRv').innerHTML = Object.keys(rm).sort(function(a,b) { return rm[b]-rm[a]; }).map(function(k) {
-      return '<div style="margin-bottom:10px">' +
-        '<div style="display:flex;justify-content:space-between;margin-bottom:3px">' +
-          '<span style="font-size:0.78rem;font-weight:500">' + k + '</span>' +
-          '<span style="font-size:0.75rem;color:var(--green);font-family:'DM Mono',monospace;font-weight:600">&#8377;' + rm[k].toLocaleString('en-IN') + '</span>' +
-        '</div>' +
-        '<div style="height:8px;border-radius:4px;background:var(--gp)">' +
-          '<div style="height:100%;width:' + (rm[k]/mxR*100) + '%;background:#3B82F6;border-radius:4px"></div>' +
-        '</div></div>';
-    }).join('');
-  } else { document.getElementById('aRv').innerHTML = na; }
+  var dl=document.getElementById('dLeg');
+  if(dl) dl.innerHTML=sd.map(function(s){return '<div class="ditem"><div class="ddot" style="background:'+s.col+'"></div>'+s.l+'<span class="dpct">'+s.c+'</span></div>';}).join('');
+  var rb=document.getElementById('recBody');if(rb){rb.innerHTML=buildTable(data,5);attachTableEvents('recBody');}
 }
 
-function updateFbStatus() {
-  var el = document.getElementById('fbStat');
-  if (!el) return;
-  el.innerHTML =
-    '<strong>Project:</strong> ' + PROJ + '<br>' +
-    '<strong>Status:</strong> ' + (isLive ? '&#128994; Connected to Firestore' : '&#128993; Using local cache (Firestore unreachable)') + '<br>' +
-    '<strong>Records loaded:</strong> ' + allB.length + '<br>' +
-    '<strong>Signed in as:</strong> ' + (cu ? cu.email : '--');
+function rFull(){var fb=document.getElementById('fullBody');if(fb){fb.innerHTML=buildTable(getFiltered());attachTableEvents('fullBody');}}
+function setFilter(f,el){flt=f;document.querySelectorAll('.ftab').forEach(function(t){t.classList.remove('active');});if(el)el.classList.add('active');rFull();}
+function onSearch(){var si=document.getElementById('srchInput');srch=si?si.value:'';var pg=document.getElementById('pg-bk');if(pg&&pg.classList.contains('active'))rFull();}
+
+function rTh(){
+  var ts=[{n:'Dr. Sarah Chen',s:'Manual Therapy &middot; Sports Rehab',ic:'&#128105;&#8205;&#9877;&#65039;'},{n:'Dr. Arjun Mehta',s:'Neuro Rehab &middot; Post-Surgery',ic:'&#128104;&#8205;&#9877;&#65039;'},{n:'Dr. Priya Nair',s:'Chronic Pain &middot; Dry Needling',ic:'&#128105;&#8205;&#9877;&#65039;'}];
+  var tg=document.getElementById('thGrid');if(!tg)return;
+  tg.innerHTML=ts.map(function(t){
+    var mine=allB.filter(function(b){return b.therapist===t.n;});
+    var conf=mine.filter(function(b){return b.status==='confirmed';}).length;
+    var rev=mine.reduce(function(s,b){return s+(parseInt((b.price||'0').replace(/[^0-9]/g,''))||0);},0);
+    var tags=mine.slice(0,4).map(function(b){var c=b.status==='confirmed'?'bc':b.status==='completed'?'bd2':b.status==='cancelled'?'bx':'bp';return '<span class="bdg '+c+'" style="font-size:0.62rem">'+(b.service||'?')+'</span>';}).join('');
+    return '<div class="thcard"><div class="thdr"><div class="thav">'+t.ic+'</div><div><div class="thnm">'+t.n+'</div><div class="thsp">'+t.s+'</div></div></div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">'+tags+(mine.length>4?'<span style="font-size:0.7rem;color:var(--mu)">+'+(mine.length-4)+' more</span>':'')+(!mine.length?'<span style="font-size:0.75rem;color:var(--mu)">No bookings yet</span>':'')+'</div>'+
+      '<div class="tsg"><div class="tsi"><div class="tsn">'+mine.length+'</div><div class="tsl">Total</div></div><div class="tsi"><div class="tsn">'+conf+'</div><div class="tsl">Active</div></div><div class="tsi"><div class="tsn">₹'+(rev/1000).toFixed(0)+'K</div><div class="tsl">Revenue</div></div></div></div>';
+  }).join('');
 }
 
-// =========================================================
-// NAV
-// =========================================================
-function showPage(name, el) {
-  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
-  document.querySelectorAll('.nitem').forEach(function(n) { n.classList.remove('active'); });
-  document.getElementById('page-' + name).classList.add('active');
-  if (el) el.classList.add('active');
-  var titles = { ov:'Overview', bk:'Bookings', th:'Therapists', an:'Analytics', st:'Settings' };
-  document.getElementById('pgTitle').textContent = titles[name] || name;
-  refresh();
-  if (name === 'st') updateFbStatus();
+function rAn(){
+  var data=allB;
+  function set(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+  if(!data.length){['aTh','aSv','aRv'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='<p style="font-size:0.82rem;color:var(--mu);padding:12px 0">No data yet.</p>';});['aAvg','aTopS','aTopT','aComp'].forEach(function(id){set(id,'—');});return;}
+  var rev=data.reduce(function(s,b){return s+(parseInt((b.price||'0').replace(/[^0-9]/g,''))||0);},0);
+  set('aAvg','₹'+Math.round(rev/data.length).toLocaleString('en-IN'));
+  var sm={};data.forEach(function(b){if(b.service)sm[b.service]=(sm[b.service]||0)+1;});
+  var topS=Object.keys(sm).sort(function(a,b){return sm[b]-sm[a];})[0];set('aTopS',topS||'—');
+  var tm={};data.forEach(function(b){if(b.therapist)tm[b.therapist]=(tm[b.therapist]||0)+1;});
+  var topT=Object.keys(tm).sort(function(a,b){return tm[b]-tm[a];})[0];set('aTopT',topT?topT.split(' ').pop():'—');
+  set('aComp',Math.round((data.filter(function(b){return b.status==='completed';}).length/data.length)*100)+'%');
+  function mkBars(map,color){var vals=Object.keys(map).map(function(k){return map[k];});var mx=vals.length?Math.max.apply(null,vals):1;return Object.keys(map).sort(function(a,b){return map[b]-map[a];}).map(function(k){return '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:0.78rem;font-weight:500">'+k+'</span><span style="font-size:0.75rem;color:var(--mu);font-family:DM Mono,monospace">'+map[k]+'</span></div><div style="height:8px;border-radius:4px;background:var(--gp)"><div style="height:100%;width:'+Math.round(map[k]/mx*100)+'%;background:'+color+';border-radius:4px"></div></div></div>';}).join('');}
+  var aTh=document.getElementById('aTh');if(aTh)aTh.innerHTML=mkBars(tm,'#1E6B45');
+  var aSv=document.getElementById('aSv');if(aSv)aSv.innerHTML=mkBars(sm,'#C8E63C');
+  var rm={};data.forEach(function(b){if(b.service)rm[b.service]=(rm[b.service]||0)+(parseInt((b.price||'0').replace(/[^0-9]/g,''))||0);});
+  var rmVals=Object.keys(rm).map(function(k){return rm[k];});var mxR=rmVals.length?Math.max.apply(null,rmVals):1;
+  var aRv=document.getElementById('aRv');
+  if(aRv)aRv.innerHTML=Object.keys(rm).sort(function(a,b){return rm[b]-rm[a];}).map(function(k){return '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:0.78rem;font-weight:500">'+k+'</span><span style="font-size:0.75rem;color:var(--green);font-family:DM Mono,monospace;font-weight:600">₹'+rm[k].toLocaleString('en-IN')+'</span></div><div style="height:8px;border-radius:4px;background:var(--gp)"><div style="height:100%;width:'+Math.round(rm[k]/mxR*100)+'%;background:#3B82F6;border-radius:4px"></div></div></div>';}).join('');
 }
 
-function setFilter(f, el) {
-  curFilter = f;
-  document.querySelectorAll('.ftab').forEach(function(t) { t.classList.remove('active'); });
-  el.classList.add('active');
-  renderBookings();
-}
-
-function onSearch() {
-  curSearch = document.getElementById('srchInput').value;
-  if (document.getElementById('page-bk').classList.contains('active')) renderBookings();
-}
-
-function refresh() {
-  var pg = document.querySelector('.page.active');
-  if (!pg) return;
-  var n = pg.id.replace('page-', '');
-  if (n === 'ov') renderOverview();
-  if (n === 'bk') renderBookings();
-  if (n === 'th') renderTherapists();
-  if (n === 'an') renderAnalytics();
-}
-
-// =========================================================
-// MODAL
-// =========================================================
-function openModal(bid, did) {
-  var b = null;
-  for (var i = 0; i < allB.length; i++) {
-    if (allB[i].id === bid || allB[i]._doc === did) { b = allB[i]; break; }
-  }
-  if (!b) return;
-  curId = bid; curDoc = did;
-  document.getElementById('mTitle').textContent = b.id || did;
-  var sel = function(val, status) { return val === status ? ' selected' : ''; };
-  document.getElementById('mBody').innerHTML =
-    '<div class="mgrid">' +
-      '<div class="mf"><div class="ml">Patient</div><div class="mv">' + (b.name||'--') + '</div></div>' +
-      '<div class="mf"><div class="ml">Phone</div><div class="mv">' + (b.phone||'--') + '</div></div>' +
-      '<div class="mf"><div class="ml">Email</div><div class="mv" style="font-size:0.78rem">' + (b.email||'--') + '</div></div>' +
-      '<div class="mf"><div class="ml">Booked At</div><div class="mv" style="font-size:0.78rem">' + (b.bookedAt ? new Date(b.bookedAt).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}) : '--') + '</div></div>' +
-    '</div>' +
-    '<div class="mdiv"></div>' +
-    '<div class="mgrid">' +
-      '<div class="mf"><div class="ml">Service</div><div class="mv">' + (b.service||'--') + '</div></div>' +
-      '<div class="mf"><div class="ml">Price</div><div class="mv" style="color:var(--green);font-family:'DM Mono',monospace">' + (b.price||'--') + '</div></div>' +
-      '<div class="mf"><div class="ml">Date</div><div class="mv">' + (b.date||'--') + '</div></div>' +
-      '<div class="mf"><div class="ml">Time</div><div class="mv">' + (b.time||'--') + '</div></div>' +
-      '<div class="mf"><div class="ml">Therapist</div><div class="mv">' + (b.therapist||'--') + '</div></div>' +
-      '<div class="mf"><div class="ml">Duration</div><div class="mv">' + (b.duration||'--') + '</div></div>' +
-    '</div>' +
-    (b.notes ? '<div class="mdiv"></div><div class="mf"><div class="ml">Notes</div><div class="mv" style="font-size:0.82rem;color:var(--muted);line-height:1.6">' + b.notes + '</div></div>' : '') +
-    '<div class="mdiv"></div>' +
-    '<div class="mf"><div class="ml">Update Status</div>' +
-      '<select class="ssel" id="mStat">' +
-        '<option value="confirmed"' + sel(b.status,'confirmed') + '>Confirmed</option>' +
-        '<option value="pending"'   + sel(b.status,'pending')   + '>Pending</option>' +
-        '<option value="completed"' + sel(b.status,'completed') + '>Completed</option>' +
-        '<option value="cancelled"' + sel(b.status,'cancelled') + '>Cancelled</option>' +
-      '</select>' +
-    '</div>' +
+function openModal(bookingId, docId) {
+  var b=null;
+  for(var i=0;i<allB.length;i++){if(allB[i].id===bookingId||allB[i]._doc===docId){b=allB[i];break;}}
+  if(!b)return;
+  curId=bookingId;curDoc=docId;
+  var mt=document.getElementById('mTtl');var mb=document.getElementById('mBdy');
+  if(mt)mt.textContent=b.id||docId;if(!mb)return;
+  function row(lbl,val){return '<div class="mf"><div class="ml">'+lbl+'</div><div class="mv2">'+(val||'&mdash;')+'</div></div>';}
+  var bs=b.bookedAt?new Date(b.bookedAt).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}):'';
+  var sel='<select class="ssel" id="mStat">';
+  [{v:'confirmed',i:'&#10003;'},{v:'pending',i:'&#9203;'},{v:'completed',i:'&#9733;'},{v:'cancelled',i:'&#10005;'}].forEach(function(o){sel+='<option value="'+o.v+'"'+(b.status===o.v?' selected':'')+'>'+o.i+' '+o.v+'</option>';});
+  sel+='</select>';
+  mb.innerHTML='<div class="mgrid">'+row('Patient',b.name)+row('Phone',b.phone)+'</div>'+
+    '<div class="mgrid">'+row('Email','<span style="font-size:0.78rem">'+(b.email||'&mdash;')+'</span>')+row('Booked','<span style="font-size:0.78rem">'+bs+'</span>')+'</div>'+
+    '<div class="mdiv"></div>'+
+    '<div class="mgrid">'+row('Service',b.service)+row('Price','<span style="color:var(--green);font-family:DM Mono,monospace">'+(b.price||'')+'</span>')+'</div>'+
+    '<div class="mgrid">'+row('Date',b.date)+row('Time',b.time)+'</div>'+
+    '<div class="mgrid">'+row('Therapist',b.therapist)+row('Duration',b.duration)+'</div>'+
+    (b.notes?'<div class="mdiv"></div>'+row('Notes','<span style="font-size:0.82rem;color:var(--mu);line-height:1.6">'+b.notes+'</span>'):'')+'<div class="mdiv"></div>'+
+    '<div class="mf"><div class="ml">Update Status</div>'+sel+'</div>'+
     '<div class="macts"><button class="msave" onclick="saveModal()">Save Changes</button><button class="mcan" onclick="closeModal()">Cancel</button></div>';
-  document.getElementById('mov').classList.add('open');
+  var ov=document.getElementById('mOv');if(ov)ov.classList.add('open');
 }
-
-async function saveModal() {
-  var ns = document.getElementById('mStat').value;
-  await patchStatus(curDoc, ns);
-  for (var i = 0; i < allB.length; i++) {
-    if (allB[i].id === curId || allB[i]._doc === curDoc) { allB[i].status = ns; break; }
-  }
-  closeModal();
-  refresh();
-  toast('Status updated to: ' + ns, '&#10003;');
+async function saveModal(){
+  var ss=document.getElementById('mStat');if(!ss)return;
+  var ns=ss.value;await patchStatus(curDoc,curId,ns);closeModal();refresh();toast('Status updated: '+ns,'&#10003;');
 }
+function closeModal(e){if(e&&e.target!==document.getElementById('mOv'))return;var ov=document.getElementById('mOv');if(ov)ov.classList.remove('open');}
 
-function closeModal(e) {
-  if (e && e.target !== document.getElementById('mov')) return;
-  document.getElementById('mov').classList.remove('open');
+function exportCSV(){
+  if(!allB.length){toast('No data','&#9888;');return;}
+  var keys=['id','name','phone','email','service','price','duration','date','time','therapist','status','bookedAt'];
+  var hdr=['ID','Name','Phone','Email','Service','Price','Duration','Date','Time','Therapist','Status','Booked At'];
+  var rows=allB.map(function(b){return keys.map(function(k){return '"'+String(b[k]||'').replace(/"/g,'""')+'"';}).join(',');});
+  var csv=[hdr.join(',')].concat(rows).join('\n');
+  var a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='physiocore-bookings-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();toast('CSV exported','&#8681;');
 }
-
-// =========================================================
-// EXPORT
-// =========================================================
-function exportCSV() {
-  if (!allB.length) { toast('No data to export', '&#9888;'); return; }
-  var cols = ['id','name','phone','email','service','price','duration','date','time','therapist','status','bookedAt'];
-  var hdrs = ['ID','Name','Phone','Email','Service','Price','Duration','Date','Time','Therapist','Status','Booked At'];
-  var rows = allB.map(function(b) {
-    return cols.map(function(c) { return '"' + String(b[c]||'').replace(/"/g,'""') + '"'; }).join(',');
-  });
-  var csv = [hdrs.join(',')].concat(rows).join('\n');
-  var a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = 'physiocore-bookings-' + new Date().toISOString().slice(0,10) + '.csv';
-  a.click();
-  toast('CSV exported!', '&#8681;');
+function clearLocal(){
+  if(!confirm('Clear local cache? Firestore data is safe.'))return;
+  localStorage.removeItem('physiocore_bookings');toast('Cleared','&#128465;');loadData();
 }
-
-function clearLocal() {
-  if (!confirm('Clear local browser cache? Firestore data is not affected.')) return;
-  localStorage.removeItem('physiocore_bookings');
-  toast('Local cache cleared', '&#128465;');
-  loadData();
-}
-
-// Auto-refresh every 30 seconds
-setInterval(function() { if (cu) loadData(); }, 30000);
+setInterval(function(){if(cu)loadData();},30000);
 </script>
+<style>
+@keyframes adm-spin { to { transform: rotate(360deg); } }
+.lerr.on { display: block !important; }
+</style>
 </body>
 </html>
