@@ -1474,7 +1474,7 @@
       <ul>
         <li><a href="#">📍 Jubilee Hills, Hyderabad</a></li>
         <li><a href="#">📞 +91 90638 10312</a></li>
-        <li><a href="#">✉️ info@physiocore.in</a></li>
+        <li><a href="#">✉️ <span class="__cf_email__" data-cfemail="89e0e7efe6c9f9e1f0fae0e6eae6fbeca7e0e7">[email&#160;protected]</span></a></li>
         <li><a href="#">🕐 Mon–Sat 8AM–8PM</a></li>
       </ul>
     </div>
@@ -1485,366 +1485,509 @@
   </div>
 </footer>
 
+
 <script>
-  // ── FIREBASE AUTH ────────────────────────────────────────
-  var FB_AUTH_KEY = 'AIzaSyCx66BrTmvEtEoEsP_Q3q2tXbpI4Jy3sEs';
-  var FB_AUTH_URL = 'https://identitytoolkit.googleapis.com/v1/accounts';
-  var currentFbUser = null;
+// ============================================================
+// FIREBASE CONFIG
+// ============================================================
+var FB_KEY = 'AIzaSyCx66BrTmvEtEoEsP_Q3q2tXbpI4Jy3sEs';
+var FB_PID = 'nikshithaphysiocore';
+var FB_AUTH = 'https://identitytoolkit.googleapis.com/v1/accounts';
+var FS_BASE = 'https://firestore.googleapis.com/v1/projects/' + FB_PID + '/databases/(default)/documents';
 
-  function fbErrMsg(msg) {
-    if (!msg) return 'Something went wrong. Please try again.';
-    if (msg.indexOf('EMAIL_NOT_FOUND') >= 0 || msg.indexOf('INVALID_PASSWORD') >= 0 || msg.indexOf('INVALID_LOGIN_CREDENTIALS') >= 0) return 'Incorrect email or password.';
-    if (msg.indexOf('EMAIL_EXISTS') >= 0) return 'This email is already registered.';
-    if (msg.indexOf('WEAK_PASSWORD') >= 0) return 'Password must be at least 6 characters.';
-    if (msg.indexOf('INVALID_EMAIL') >= 0) return 'Please enter a valid email address.';
-    if (msg.indexOf('TOO_MANY_ATTEMPTS') >= 0) return 'Too many attempts. Please try again later.';
-    if (msg.indexOf('USER_DISABLED') >= 0) return 'This account has been disabled.';
-    return msg;
-  }
+// ============================================================
+// AUTH HELPERS
+// ============================================================
+var currentUser = null;
 
-  function showLoginErr(msg) {
-    var el = document.getElementById('loginError');
-    el.textContent = msg; el.style.display = 'block'; el.classList.add('show');
-    document.getElementById('loginSuccess').style.display = 'none';
-  }
-  function showLoginOk(msg) {
-    var el = document.getElementById('loginSuccess');
-    el.textContent = msg; el.style.display = 'block';
-    document.getElementById('loginError').style.display = 'none';
-    document.getElementById('loginError').classList.remove('show');
-  }
-  function clearLoginMsgs() {
-    document.getElementById('loginError').style.display = 'none';
-    document.getElementById('loginError').classList.remove('show');
-    document.getElementById('loginSuccess').style.display = 'none';
-  }
+function fbErrMsg(msg) {
+  if (!msg) return 'Something went wrong. Try again.';
+  if (msg.indexOf('INVALID_LOGIN_CREDENTIALS') >= 0 || msg.indexOf('INVALID_PASSWORD') >= 0 || msg.indexOf('EMAIL_NOT_FOUND') >= 0) return 'Incorrect email or password.';
+  if (msg.indexOf('EMAIL_EXISTS') >= 0) return 'This email is already registered.';
+  if (msg.indexOf('WEAK_PASSWORD') >= 0) return 'Password must be at least 6 characters.';
+  if (msg.indexOf('INVALID_EMAIL') >= 0) return 'Please enter a valid email address.';
+  if (msg.indexOf('TOO_MANY_ATTEMPTS') >= 0) return 'Too many attempts. Please try again later.';
+  if (msg.indexOf('MISSING_EMAIL') >= 0) return 'Please enter your email address.';
+  return 'Error: ' + msg;
+}
 
-  function switchLoginTab(tab, el) {
-    document.querySelectorAll('.login-tab').forEach(function(t) { t.classList.remove('active'); });
-    if (el) el.classList.add('active');
-    document.getElementById('tabLogin').style.display    = (tab === 'login')    ? 'block' : 'none';
-    document.getElementById('tabRegister').style.display = (tab === 'register') ? 'block' : 'none';
-    document.getElementById('tabReset').style.display    = (tab === 'reset')    ? 'block' : 'none';
-    // Show reset tab button only when on reset
-    document.getElementById('tabBtnReset').style.display = (tab === 'reset') ? 'inline-block' : 'none';
-    clearLoginMsgs();
-  }
+function showAuthErr(msg) {
+  var el = document.getElementById('loginError');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.classList.add('show');
+  var ok = document.getElementById('loginSuccess');
+  if (ok) ok.style.display = 'none';
+}
 
-  function setBtnLoading(id, loading, label) {
-    var btn = document.getElementById(id);
-    if (!btn) return;
-    btn.disabled = loading;
-    btn.innerHTML = loading ? '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px"></span>Please wait...' : label;
-  }
+function showAuthOk(msg) {
+  var ok = document.getElementById('loginSuccess');
+  if (!ok) return;
+  ok.textContent = msg;
+  ok.style.display = 'block';
+  var el = document.getElementById('loginError');
+  if (el) { el.style.display = 'none'; el.classList.remove('show'); }
+}
 
-  async function doLogin() {
-    var email = document.getElementById('loginEmail').value.trim();
-    var pwd   = document.getElementById('loginPwd').value;
-    if (!email || !pwd) { showLoginErr('Please enter your email and password.'); return; }
-    setBtnLoading('loginBtn', true, 'Sign In &#8594;');
-    clearLoginMsgs();
-    try {
-      var res = await fetch(FB_AUTH_URL + ':signInWithPassword?key=' + FB_AUTH_KEY, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, password: pwd, returnSecureToken: true })
-      });
-      var d = await res.json();
-      if (!res.ok) throw new Error(d.error ? d.error.message : 'Login failed');
-      currentFbUser = { email: d.email, name: d.displayName || email.split('@')[0], token: d.idToken, uid: d.localId };
-      sessionStorage.setItem('physiocore_session', JSON.stringify(currentFbUser));
-      onLoggedIn(currentFbUser);
-    } catch(e) {
-      showLoginErr(fbErrMsg(e.message));
-    } finally {
-      setBtnLoading('loginBtn', false, 'Sign In &#8594;');
+function clearAuthMsgs() {
+  var el = document.getElementById('loginError');
+  if (el) { el.style.display = 'none'; el.classList.remove('show'); }
+  var ok = document.getElementById('loginSuccess');
+  if (ok) ok.style.display = 'none';
+}
+
+function setBtnBusy(id, busy, label) {
+  var btn = document.getElementById(id);
+  if (!btn) return;
+  btn.disabled = busy;
+  if (busy) {
+    btn.innerHTML = '<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:ld-spin 0.7s linear infinite;vertical-align:middle;margin-right:6px"></span>Please wait...';
+  } else {
+    btn.innerHTML = label;
+  }
+}
+
+// ============================================================
+// SWITCH TABS
+// ============================================================
+function switchLoginTab(tab, el) {
+  document.querySelectorAll('.login-tab').forEach(function(t) { t.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  var tabLogin    = document.getElementById('tabLogin');
+  var tabRegister = document.getElementById('tabRegister');
+  var tabReset    = document.getElementById('tabReset');
+  var btnReset    = document.getElementById('tabBtnReset');
+  if (tabLogin)    tabLogin.style.display    = (tab === 'login')    ? 'block' : 'none';
+  if (tabRegister) tabRegister.style.display = (tab === 'register') ? 'block' : 'none';
+  if (tabReset)    tabReset.style.display    = (tab === 'reset')    ? 'block' : 'none';
+  if (btnReset)    btnReset.style.display    = (tab === 'reset')    ? 'inline-block' : 'none';
+  clearAuthMsgs();
+}
+
+// ============================================================
+// SIGN IN
+// ============================================================
+async function doLogin() {
+  var email = document.getElementById('loginEmail').value.trim();
+  var pwd   = document.getElementById('loginPwd').value;
+  if (!email || !pwd) { showAuthErr('Please enter your email and password.'); return; }
+  setBtnBusy('loginBtn', true, 'Sign In &#8594;');
+  clearAuthMsgs();
+  try {
+    var res = await fetch(FB_AUTH + ':signInWithPassword?key=' + FB_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: pwd, returnSecureToken: true })
+    });
+    var d = await res.json();
+    if (!res.ok) throw new Error(d.error ? d.error.message : 'Login failed');
+    currentUser = { email: d.email, name: d.displayName || email.split('@')[0], token: d.idToken, uid: d.localId };
+    sessionStorage.setItem('physiocore_session', JSON.stringify(currentUser));
+    onLoggedIn(currentUser);
+  } catch (e) {
+    showAuthErr(fbErrMsg(e.message));
+  } finally {
+    setBtnBusy('loginBtn', false, 'Sign In &#8594;');
+  }
+}
+
+// ============================================================
+// REGISTER
+// ============================================================
+async function doRegister() {
+  var first = document.getElementById('regFirst').value.trim();
+  var last  = document.getElementById('regLast').value.trim();
+  var phone = document.getElementById('regPhone').value.trim();
+  var email = document.getElementById('regEmail').value.trim();
+  var pwd   = document.getElementById('regPwd').value;
+  if (!first || !email || !pwd) { showAuthErr('Please fill in all required fields.'); return; }
+  if (pwd.length < 6) { showAuthErr('Password must be at least 6 characters.'); return; }
+  setBtnBusy('regBtn', true, 'Create Account &#8594;');
+  clearAuthMsgs();
+  try {
+    var res = await fetch(FB_AUTH + ':signUp?key=' + FB_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: pwd, returnSecureToken: true })
+    });
+    var d = await res.json();
+    if (!res.ok) throw new Error(d.error ? d.error.message : 'Registration failed');
+    var fullName = (first + ' ' + last).trim();
+    await fetch(FB_AUTH + ':update?key=' + FB_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: d.idToken, displayName: fullName })
+    });
+    currentUser = { email: d.email, name: fullName, phone: phone, token: d.idToken, uid: d.localId };
+    sessionStorage.setItem('physiocore_session', JSON.stringify(currentUser));
+    onLoggedIn(currentUser);
+  } catch (e) {
+    showAuthErr(fbErrMsg(e.message));
+  } finally {
+    setBtnBusy('regBtn', false, 'Create Account &#8594;');
+  }
+}
+
+// ============================================================
+// FORGOT PASSWORD
+// ============================================================
+async function doReset() {
+  var email = document.getElementById('resetEmail').value.trim();
+  if (!email) { showAuthErr('Please enter your email address.'); return; }
+  setBtnBusy('resetBtn', true, 'Send Reset Link &#8594;');
+  clearAuthMsgs();
+  try {
+    var res = await fetch(FB_AUTH + ':sendOobCode?key=' + FB_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requestType: 'PASSWORD_RESET', email: email })
+    });
+    var d = await res.json();
+    if (!res.ok) throw new Error(d.error ? d.error.message : 'Reset failed');
+    showAuthOk('Reset email sent! Check your inbox (and spam folder).');
+    document.getElementById('resetEmail').value = '';
+  } catch (e) {
+    showAuthErr(fbErrMsg(e.message));
+  } finally {
+    setBtnBusy('resetBtn', false, 'Send Reset Link &#8594;');
+  }
+}
+
+// ============================================================
+// GUEST
+// ============================================================
+function guestLogin() {
+  currentUser = { email: '', name: 'Guest', phone: '' };
+  sessionStorage.setItem('physiocore_session', JSON.stringify(currentUser));
+  onLoggedIn(currentUser);
+}
+
+// ============================================================
+// SESSION
+// ============================================================
+function getCurrentUser() {
+  try { return JSON.parse(sessionStorage.getItem('physiocore_session')); } catch (e) { return null; }
+}
+
+function onLoggedIn(user) {
+  var gate = document.getElementById('loginGate');
+  if (gate) gate.classList.add('hidden');
+  var nameEl = document.getElementById('chipName');
+  var chip   = document.getElementById('userChip');
+  if (nameEl) nameEl.textContent = (user.name || 'Patient').split(' ')[0];
+  if (chip)   chip.classList.add('visible');
+  currentUser = user;
+}
+
+function logoutUser() {
+  if (!confirm('Log out?')) return;
+  sessionStorage.removeItem('physiocore_session');
+  currentUser = null;
+  var gate = document.getElementById('loginGate');
+  if (gate) gate.classList.remove('hidden');
+  var chip = document.getElementById('userChip');
+  if (chip) chip.classList.remove('visible');
+  switchLoginTab('login', document.getElementById('tabBtnLogin'));
+}
+
+// Auto-restore session on load
+(function () {
+  var u = getCurrentUser();
+  if (u) onLoggedIn(u);
+})();
+
+// ============================================================
+// FIREBASE SAVE (Bookings)
+// ============================================================
+async function saveToFirestore(record) {
+  var fields = {};
+  var keys = Object.keys(record);
+  for (var i = 0; i < keys.length; i++) {
+    fields[keys[i]] = { stringValue: String(record[keys[i]]) };
+  }
+  try {
+    var res = await fetch(FS_BASE + '/bookings?key=' + FB_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: fields })
+    });
+    if (res.ok) {
+      console.log('Booking saved to Firestore');
+    } else {
+      var err = await res.text();
+      console.warn('Firestore error:', err);
     }
+  } catch (e) {
+    console.warn('Firestore unavailable, using localStorage only:', e.message);
   }
+  // Always save locally as backup
+  var existing = JSON.parse(localStorage.getItem('physiocore_bookings') || '[]');
+  existing.unshift(record);
+  localStorage.setItem('physiocore_bookings', JSON.stringify(existing));
+}
 
-  async function doRegister() {
-    var first = document.getElementById('regFirst').value.trim();
-    var last  = document.getElementById('regLast').value.trim();
-    var phone = document.getElementById('regPhone').value.trim();
-    var email = document.getElementById('regEmail').value.trim();
-    var pwd   = document.getElementById('regPwd').value;
-    if (!first || !email || !pwd) { showLoginErr('Please fill in all required fields.'); return; }
-    if (pwd.length < 6) { showLoginErr('Password must be at least 6 characters.'); return; }
-    setBtnLoading('regBtn', true, 'Create Account &#8594;');
-    clearLoginMsgs();
-    try {
-      var res = await fetch(FB_AUTH_URL + ':signUp?key=' + FB_AUTH_KEY, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, password: pwd, returnSecureToken: true })
-      });
-      var d = await res.json();
-      if (!res.ok) throw new Error(d.error ? d.error.message : 'Registration failed');
-      var fullName = (first + ' ' + last).trim();
-      // Set display name
-      await fetch(FB_AUTH_URL + ':update?key=' + FB_AUTH_KEY, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken: d.idToken, displayName: fullName, returnSecureToken: false })
-      });
-      currentFbUser = { email: d.email, name: fullName, phone: phone, token: d.idToken, uid: d.localId };
-      sessionStorage.setItem('physiocore_session', JSON.stringify(currentFbUser));
-      onLoggedIn(currentFbUser);
-    } catch(e) {
-      showLoginErr(fbErrMsg(e.message));
-    } finally {
-      setBtnLoading('regBtn', false, 'Create Account &#8594;');
-    }
-  }
-
-  async function doReset() {
-    var email = document.getElementById('resetEmail').value.trim();
-    if (!email) { showLoginErr('Please enter your email address.'); return; }
-    setBtnLoading('resetBtn', true, 'Send Reset Link &#8594;');
-    clearLoginMsgs();
-    try {
-      var res = await fetch(FB_AUTH_URL + ':sendOobCode?key=' + FB_AUTH_KEY, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestType: 'PASSWORD_RESET', email: email })
-      });
-      var d = await res.json();
-      if (!res.ok) throw new Error(d.error ? d.error.message : 'Reset failed');
-      showLoginOk('Password reset email sent! Check your inbox (and spam folder).');
-      document.getElementById('resetEmail').value = '';
-    } catch(e) {
-      showLoginErr(fbErrMsg(e.message));
-    } finally {
-      setBtnLoading('resetBtn', false, 'Send Reset Link &#8594;');
-    }
-  }
-
-  function guestLogin() {
-    var guest = { email: '', name: 'Guest', phone: '' };
-    sessionStorage.setItem('physiocore_session', JSON.stringify(guest));
-    onLoggedIn(guest);
-  }
-
-  function getCurrentUser() {
-    try { return JSON.parse(sessionStorage.getItem('physiocore_session')); } catch { return null; }
-  }
-
-  function onLoggedIn(user) {
-    document.getElementById('loginGate').classList.add('hidden');
-    var name = (user.name || user.email || 'Patient').split(' ')[0];
-    document.getElementById('chipName').textContent = name;
-    document.getElementById('userChip').classList.add('visible');
-    currentFbUser = user;
-  }
-
-  function logoutUser() {
-    if (!confirm('Log out?')) return;
-    sessionStorage.removeItem('physiocore_session');
-    currentFbUser = null;
-    document.getElementById('loginGate').classList.remove('hidden');
-    document.getElementById('userChip').classList.remove('visible');
-    // Reset to sign-in tab
-    switchLoginTab('login', document.getElementById('tabBtnLogin'));
-  }
-
-  // Add spin animation for loading buttons
-  var spinStyle = document.createElement('style');
-  spinStyle.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
-  document.head.appendChild(spinStyle);
-
-  // Auto-restore session
-  (function() { var u = getCurrentUser(); if (u) onLoggedIn(u); })();
-
-  // ── CUSTOM CURSOR ─────────────────────────────────────────
-  const cursor = document.getElementById('cursor');
-  const cursorRing = document.getElementById('cursorRing');
-  document.addEventListener('mousemove', e => {
+// ============================================================
+// CUSTOM CURSOR
+// ============================================================
+var cursor    = document.getElementById('cursor');
+var cursorRing = document.getElementById('cursorRing');
+if (cursor && cursorRing) {
+  document.addEventListener('mousemove', function (e) {
     cursor.style.left = e.clientX + 'px';
-    cursor.style.top = e.clientY + 'px';
-    setTimeout(() => {
+    cursor.style.top  = e.clientY + 'px';
+    setTimeout(function () {
       cursorRing.style.left = e.clientX + 'px';
-      cursorRing.style.top = e.clientY + 'px';
+      cursorRing.style.top  = e.clientY + 'px';
     }, 80);
   });
-  document.querySelectorAll('a,button,.service-card,.step-item,.time-slot,.therapist-card,.team-card,.review-card,.service-feature,.pain-point,.cal-day').forEach(el => {
-    el.addEventListener('mouseenter', () => { cursor.classList.add('hover'); cursorRing.classList.add('hover'); });
-    el.addEventListener('mouseleave', () => { cursor.classList.remove('hover'); cursorRing.classList.remove('hover'); });
+  document.querySelectorAll('a,button,.service-card,.step-item,.time-slot,.therapist-card,.team-card,.review-card,.service-feature,.pain-point,.cal-day').forEach(function (el) {
+    el.addEventListener('mouseenter', function () { cursor.classList.add('hover'); cursorRing.classList.add('hover'); });
+    el.addEventListener('mouseleave', function () { cursor.classList.remove('hover'); cursorRing.classList.remove('hover'); });
   });
+}
 
-  // Navbar scroll
-  window.addEventListener('scroll', () => {
-    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+// Navbar scroll
+window.addEventListener('scroll', function () {
+  var nb = document.getElementById('navbar');
+  if (nb) nb.classList.toggle('scrolled', window.scrollY > 50);
+});
+
+// Scroll reveal
+var observer = new IntersectionObserver(function (entries) {
+  entries.forEach(function (e) { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(function (el) { observer.observe(el); });
+
+// ============================================================
+// BOOKING STATE
+// ============================================================
+var bookingData = { service: 'Manual Therapy', price: '\u20B91,800', dur: '60 min', date: '', time: '', therapist: 'Dr. Sarah Chen' };
+var currentStep = 1;
+var calYear = 2026, calMonth = 2;
+
+function goStep(step) {
+  document.querySelectorAll('.step-item').forEach(function (s, i) {
+    s.classList.toggle('active', i + 1 === step);
+    s.classList.toggle('done', i + 1 < step);
   });
+  document.querySelectorAll('.form-panel').forEach(function (p, i) { p.classList.toggle('active', i + 1 === step); });
+  currentStep = step;
+  updateConfirm();
+}
 
-  // Scroll reveal
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); } });
-  }, { threshold: 0.1 });
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+function selectService(el, name, price, dur) {
+  document.querySelectorAll('.service-card').forEach(function (c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+  bookingData.service = name; bookingData.price = price; bookingData.dur = dur;
+}
 
-  // BOOKING STATE
-  let bookingData = { service: 'Manual Therapy', price: '₹1,800', dur: '60 min', date: '', time: '', therapist: 'Dr. Sarah Chen' };
-  let currentStep = 1;
-  let calYear = 2026, calMonth = 2; // March
+// ============================================================
+// CALENDAR
+// ============================================================
+var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-  function goStep(step) {
-    document.querySelectorAll('.step-item').forEach((s,i) => {
-      s.classList.toggle('active', i+1 === step);
-      s.classList.toggle('done', i+1 < step);
-    });
-    document.querySelectorAll('.form-panel').forEach((p,i) => p.classList.toggle('active', i+1 === step));
-    currentStep = step;
-    updateConfirm();
+function renderCal() {
+  var calMonthEl = document.getElementById('calMonth');
+  if (calMonthEl) calMonthEl.textContent = months[calMonth] + ' ' + calYear;
+  var firstDay = new Date(calYear, calMonth, 1).getDay();
+  var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  var today = new Date();
+  var todayD = today.getDate(), todayM = today.getMonth(), todayY = today.getFullYear();
+  var html = '';
+  for (var i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
+  for (var d = 1; d <= daysInMonth; d++) {
+    var isToday  = d === todayD && calMonth === todayM && calYear === todayY;
+    var isPast   = new Date(calYear, calMonth, d) < new Date(todayY, todayM, todayD);
+    var isAvail  = !isPast && (d % 3 !== 0);
+    html += '<div class="cal-day ' + (isToday ? 'today' : '') + ' ' + (isPast ? 'past' : '') + ' ' + (isAvail ? 'available' : '') + '" onclick="selectDay(this,' + d + ')">' + d + '</div>';
   }
+  var calDays = document.getElementById('calDays');
+  if (calDays) calDays.innerHTML = html;
+  renderTimeSlots();
+}
 
-  function selectService(el, name, price, dur) {
-    document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
-    bookingData.service = name; bookingData.price = price; bookingData.dur = dur;
-  }
-
-  // Calendar
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  function renderCal() {
-    document.getElementById('calMonth').textContent = months[calMonth] + ' ' + calYear;
-    const firstDay = new Date(calYear, calMonth, 1).getDay();
-    const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
-    const today = new Date(); const todayD = today.getDate(), todayM = today.getMonth(), todayY = today.getFullYear();
-    let html = '';
-    for(let i=0;i<firstDay;i++) html += '<div class="cal-day empty"></div>';
-    for(let d=1;d<=daysInMonth;d++) {
-      const isToday = d===todayD && calMonth===todayM && calYear===todayY;
-      const isPast = new Date(calYear,calMonth,d) < new Date(todayY,todayM,todayD);
-      const isAvail = !isPast && (d%3!==0);
-      html += `<div class="cal-day ${isToday?'today':''} ${isPast?'past':''} ${isAvail?'available':''}" onclick="selectDay(this,${d})">${d}</div>`;
-    }
-    document.getElementById('calDays').innerHTML = html;
-    renderTimeSlots();
-  }
-  function changeMonth(dir) { calMonth += dir; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} renderCal(); }
-  function selectDay(el, d) {
-    if(el.classList.contains('past')) return;
-    document.querySelectorAll('.cal-day').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
-    bookingData.date = months[calMonth].slice(0,3) + ' ' + d;
-    renderTimeSlots();
-  }
-  const allSlots = ['8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
-  const booked = ['9:00 AM','12:00 PM','4:00 PM'];
-  function renderTimeSlots() {
-    document.getElementById('timeSlots').innerHTML = allSlots.map(t =>
-      `<div class="time-slot ${booked.includes(t)?'booked':''}" onclick="selectTime(this,'${t}')">${t}</div>`
-    ).join('');
-  }
-  function selectTime(el, t) {
-    if(el.classList.contains('booked')) return;
-    document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-    el.classList.add('selected'); bookingData.time = t;
-  }
-
-  function selectTherapist(el, name) {
-    document.querySelectorAll('.therapist-card').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected'); bookingData.therapist = name;
-  }
-
-  function updateConfirm() {
-    document.getElementById('cService').textContent = bookingData.service;
-    document.getElementById('cDate').textContent = (bookingData.date||'Mar 15') + ' · ' + (bookingData.time||'10:00 AM');
-    document.getElementById('cTherapist').textContent = bookingData.therapist;
-    document.getElementById('cDur').textContent = bookingData.dur;
-    document.getElementById('cPrice').textContent = bookingData.price;
-  }
-
-  // ── FIREBASE REST API ─────────────────────────────────────
-  const FB_PROJECT = 'nikshithaphysiocore';
-  const FB_API_KEY  = 'AIzaSyCx66BrTmvEtEoEsP_Q3q2tXbpI4Jy3sEs';
-  const FS_BASE = 'https://firestore.googleapis.com/v1/projects/' + FB_PROJECT + '/databases/(default)/documents';
-
-  async function saveToFirestore(record) {
-    const fields = {};
-    Object.entries(record).forEach(function(kv){ fields[kv[0]] = { stringValue: String(kv[1]) }; });
-    try {
-      const res = await fetch(FS_BASE + '/bookings?key=' + FB_API_KEY, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fields: fields })
-      });
-      if (res.ok) { console.log('Saved to Firestore'); }
-      else { const t = await res.text(); console.warn('Firestore error:', t); }
-    } catch(e) { console.warn('Firestore unavailable, using localStorage only'); }
-    const existing = JSON.parse(localStorage.getItem('physiocore_bookings') || '[]');
-    existing.unshift(record);
-    localStorage.setItem('physiocore_bookings', JSON.stringify(existing));
-  }
-
-  async function confirmBooking() {
-    document.querySelectorAll('.form-panel').forEach(function(p){ p.classList.remove('active'); });
-    document.querySelectorAll('.step-item').forEach(function(s){ s.classList.remove('active'); s.classList.add('done'); });
-    const id = 'PHYSIO-#' + (Math.floor(Math.random()*9000)+1000);
-    document.getElementById('bookingId').textContent = id;
-    document.getElementById('successScreen').classList.add('active');
-    const inputs = document.querySelectorAll('.form-input');
-    const cu = getCurrentUser();
-    const firstName = (inputs[0] && inputs[0].value) || (cu && cu.name && cu.name.split(' ')[0]) || 'Patient';
-    const lastName  = (inputs[1] && inputs[1].value) || '';
-    const phone     = (inputs[2] && inputs[2].value) || (cu && cu.phone) || '';
-    const email     = (inputs[3] && inputs[3].value) || (cu && cu.email) || '';
-    const nt        = document.querySelector('.form-textarea');
-    const notes     = nt ? nt.value : '';
-    const fullName  = (firstName + ' ' + lastName).trim() || (cu && cu.name) || 'Patient';
-    const record = {
-      id: id, service: bookingData.service, price: bookingData.price,
-      duration: bookingData.dur, date: bookingData.date || 'Mar 15',
-      time: bookingData.time || '10:00 AM', therapist: bookingData.therapist,
-      name: fullName, phone: phone, email: email, notes: notes,
-      status: 'confirmed', bookedAt: new Date().toISOString()
-    };
-    await saveToFirestore(record);
-    const waPhone = (phone || '919000000000').replace(/[^0-9]/g,'') || '919000000000';
-    const waMsg = encodeURIComponent(
-      'Booking Confirmed - PhysioCore' +
-      '%0AID: ' + id +
-      '%0APatient: ' + fullName +
-      '%0AService: ' + record.service +
-      '%0ADate: ' + record.date + ' at ' + record.time +
-      '%0ATherapist: ' + record.therapist +
-      '%0AAmount: ' + record.price +
-      '%0APhysioCore, Jubilee Hills, Hyderabad'
-    );
-    const waBtn = document.getElementById('waConfirmBtn');
-    if (waBtn) waBtn.href = 'https://wa.me/' + waPhone + '?text=' + waMsg;
-  }
-
-
-  function resetBooking() {
-    document.getElementById('successScreen').classList.remove('active');
-    goStep(1);
-  }
-
-  // ── PAIN MAP (FIXED) ──────────────────────────────────────
-  const painData = {
-    head: { title:'Headaches & Neck Pain', color:'#E63C3C', desc:'Tension headaches, migraines, and cervicogenic pain often originate from neck muscle tightness and poor posture. Highly treatable with the right therapy.', suggestions:[['🤲','Manual Therapy','Cervical mobilization and soft tissue release'],['🧘','Postural Training','Ergonomic assessment and posture correction'],['💉','Dry Needling','Trigger point release for neck and scalp muscles']] },
-    shoulder: { title:'Shoulder Impingement', color:'#F59E0B', desc:'Shoulder pain from rotator cuff issues, frozen shoulder, or impingement syndrome — all highly treatable with targeted physiotherapy.', suggestions:[['⚡','Sports Rehab','Rotator cuff strengthening protocol'],['🤲','Manual Therapy','Joint mobilization and manipulation'],['📋','Exercise Program','Progressive resistance and stability training']] },
-    back: { title:'Lower Back Pain', color:'#8B5CF6', desc:'Lower back pain affects 80% of adults. Our evidence-based approach addresses both the immediate pain and root biomechanical causes.', suggestions:[['🦴','Spinal Therapy','Disc decompression and lumbar stabilization'],['💉','Dry Needling','Deep muscle trigger point release'],['🏋️','Core Rehab','Functional strengthening and movement retraining']] },
-    knee: { title:'Knee Pain & Osteoarthritis', color:'#3B82F6', desc:'Knee pain from osteoarthritis, ligament injuries, or patellofemoral syndrome responds well to targeted physiotherapy and exercise rehab.', suggestions:[['⚡','Sports Rehab','Biomechanical gait and load analysis'],['🤲','Manual Therapy','Patellar and tibial joint mobilization'],['🏃','Movement Therapy','Neuromuscular control and balance training']] },
-    ankle: { title:'Ankle Sprain & Instability', color:'#10B981', desc:'Ankle sprains and instability require careful progressive loading and proprioceptive retraining to prevent re-injury and regain confidence.', suggestions:[['🦶','Ankle Rehab','Graded loading and stability exercises'],['🤲','Manual Therapy','Talocrural joint mobilization'],['⚡','Sports Rehab','Return-to-sport progression program']] },
-  };
-  function selectPain(el, area, title) {
-    document.querySelectorAll('.pain-point').forEach(p => p.classList.remove('active'));
-    el.classList.add('active');
-    const data = painData[area];
-    const panel = document.getElementById('painInfo');
-    panel.style.opacity = '0'; panel.style.transform = 'translateX(10px)';
-    setTimeout(() => {
-      document.getElementById('painTitle').textContent = data.title;
-      document.getElementById('painTitle').style.color = data.color;
-      document.getElementById('painDesc').textContent = data.desc;
-      document.getElementById('painSuggestion').innerHTML = data.suggestions.map(s =>
-        `<div class="suggestion-item" style="border-left:3px solid ${data.color}">
-          <div class="suggestion-icon">${s[0]}</div>
-          <div class="suggestion-text"><strong>${s[1]}</strong><br><span style="color:var(--muted);font-size:0.75rem">${s[2]}</span></div>
-          <a href="#book" style="margin-left:auto;background:var(--green-pale);color:var(--green);border:none;border-radius:8px;padding:5px 10px;font-size:0.7rem;font-weight:600;cursor:pointer;white-space:nowrap;text-decoration:none">Book →</a>
-        </div>`
-      ).join('');
-      panel.style.opacity = '1'; panel.style.transform = 'translateX(0)';
-    }, 150);
-  }
-  document.getElementById('painInfo').style.transition = 'opacity 0.25s ease, transform 0.25s ease';
-
-  // Init
+function changeMonth(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
   renderCal();
+}
+
+function selectDay(el, d) {
+  if (el.classList.contains('past')) return;
+  document.querySelectorAll('.cal-day').forEach(function (c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+  bookingData.date = months[calMonth].slice(0, 3) + ' ' + d;
+  renderTimeSlots();
+}
+
+var allSlots = ['8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
+var bookedSlots = ['9:00 AM','12:00 PM','4:00 PM'];
+
+function renderTimeSlots() {
+  var el = document.getElementById('timeSlots');
+  if (!el) return;
+  el.innerHTML = allSlots.map(function (t) {
+    return '<div class="time-slot ' + (bookedSlots.indexOf(t) >= 0 ? 'booked' : '') + '" onclick="selectTime(this,\'' + t + '\')">' + t + '</div>';
+  }).join('');
+}
+
+function selectTime(el, t) {
+  if (el.classList.contains('booked')) return;
+  document.querySelectorAll('.time-slot').forEach(function (s) { s.classList.remove('selected'); });
+  el.classList.add('selected');
+  bookingData.time = t;
+}
+
+function selectTherapist(el, name) {
+  document.querySelectorAll('.therapist-card').forEach(function (c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+  bookingData.therapist = name;
+}
+
+function updateConfirm() {
+  var cService   = document.getElementById('cService');
+  var cDate      = document.getElementById('cDate');
+  var cTherapist = document.getElementById('cTherapist');
+  var cDur       = document.getElementById('cDur');
+  var cPrice     = document.getElementById('cPrice');
+  if (cService)   cService.textContent   = bookingData.service;
+  if (cDate)      cDate.textContent      = (bookingData.date || 'Mar 15') + ' \u00B7 ' + (bookingData.time || '10:00 AM');
+  if (cTherapist) cTherapist.textContent = bookingData.therapist;
+  if (cDur)       cDur.textContent       = bookingData.dur;
+  if (cPrice)     cPrice.textContent     = bookingData.price;
+}
+
+// ============================================================
+// CONFIRM BOOKING
+// ============================================================
+async function confirmBooking() {
+  document.querySelectorAll('.form-panel').forEach(function (p) { p.classList.remove('active'); });
+  document.querySelectorAll('.step-item').forEach(function (s) { s.classList.remove('active'); s.classList.add('done'); });
+  var id = 'PHYSIO-#' + (Math.floor(Math.random() * 9000) + 1000);
+  var idEl = document.getElementById('bookingId');
+  if (idEl) idEl.textContent = id;
+  var success = document.getElementById('successScreen');
+  if (success) success.classList.add('active');
+
+  var inputs    = document.querySelectorAll('.form-input');
+  var cu        = getCurrentUser();
+  var firstName = (inputs[0] && inputs[0].value) || (cu && cu.name && cu.name.split(' ')[0]) || 'Patient';
+  var lastName  = (inputs[1] && inputs[1].value) || '';
+  var phone     = (inputs[2] && inputs[2].value) || (cu && cu.phone) || '';
+  var email     = (inputs[3] && inputs[3].value) || (cu && cu.email) || '';
+  var ntEl      = document.querySelector('.form-textarea');
+  var notes     = ntEl ? ntEl.value : '';
+  var fullName  = (firstName + ' ' + lastName).trim() || (cu && cu.name) || 'Patient';
+
+  var record = {
+    id: id,
+    service:   bookingData.service,
+    price:     bookingData.price,
+    duration:  bookingData.dur,
+    date:      bookingData.date  || 'Mar 15',
+    time:      bookingData.time  || '10:00 AM',
+    therapist: bookingData.therapist,
+    name:      fullName,
+    phone:     phone,
+    email:     email,
+    notes:     notes,
+    status:    'confirmed',
+    bookedAt:  new Date().toISOString()
+  };
+
+  await saveToFirestore(record);
+
+  var waPhone = (phone || '919063810312').replace(/[^0-9]/g, '') || '919063810312';
+  var waMsg = encodeURIComponent(
+    'Booking Confirmed - PhysioCore\n' +
+    'ID: ' + id + '\n' +
+    'Patient: ' + fullName + '\n' +
+    'Service: ' + record.service + '\n' +
+    'Date: ' + record.date + ' at ' + record.time + '\n' +
+    'Therapist: ' + record.therapist + '\n' +
+    'Amount: ' + record.price + '\n' +
+    'PhysioCore, Jubilee Hills, Hyderabad\n' +
+    'Contact: +91 90638 10312'
+  );
+  var waBtn = document.getElementById('waConfirmBtn');
+  if (waBtn) waBtn.href = 'https://wa.me/' + waPhone + '?text=' + waMsg;
+}
+
+function resetBooking() {
+  var success = document.getElementById('successScreen');
+  if (success) success.classList.remove('active');
+  goStep(1);
+}
+
+// ============================================================
+// PAIN MAP
+// ============================================================
+var painData = {
+  head: {
+    title: 'Headaches & Neck Pain', color: '#E63C3C',
+    desc: 'Tension headaches, migraines, and cervicogenic pain often originate from neck muscle tightness and poor posture. Highly treatable with the right therapy.',
+    suggestions: [['\uD83E\uDD32','Manual Therapy','Cervical mobilization and soft tissue release'],['\uD83E\uDDD8','Postural Training','Ergonomic assessment and posture correction'],['\uD83D\uDC89','Dry Needling','Trigger point release for neck and scalp muscles']]
+  },
+  shoulder: {
+    title: 'Shoulder Impingement', color: '#F59E0B',
+    desc: 'Shoulder pain from rotator cuff issues, frozen shoulder, or impingement syndrome — all highly treatable with targeted physiotherapy.',
+    suggestions: [['\u26A1','Sports Rehab','Rotator cuff strengthening protocol'],['\uD83E\uDD32','Manual Therapy','Joint mobilization and manipulation'],['\uD83D\uDCCB','Exercise Program','Progressive resistance and stability training']]
+  },
+  back: {
+    title: 'Lower Back Pain', color: '#8B5CF6',
+    desc: 'Lower back pain affects 80% of adults. Our evidence-based approach addresses both the immediate pain and root biomechanical causes.',
+    suggestions: [['\uD83E\uDDB4','Spinal Therapy','Disc decompression and lumbar stabilization'],['\uD83D\uDC89','Dry Needling','Deep muscle trigger point release'],['\uD83C\uDFCB\uFE0F','Core Rehab','Functional strengthening and movement retraining']]
+  },
+  knee: {
+    title: 'Knee Pain & Osteoarthritis', color: '#3B82F6',
+    desc: 'Knee pain from osteoarthritis, ligament injuries, or patellofemoral syndrome responds well to targeted physiotherapy and exercise rehab.',
+    suggestions: [['\u26A1','Sports Rehab','Biomechanical gait and load analysis'],['\uD83E\uDD32','Manual Therapy','Patellar and tibial joint mobilization'],['\uD83C\uDFC3','Movement Therapy','Neuromuscular control and balance training']]
+  },
+  ankle: {
+    title: 'Ankle Sprain & Instability', color: '#10B981',
+    desc: 'Ankle sprains and instability require careful progressive loading and proprioceptive retraining to prevent re-injury and regain confidence.',
+    suggestions: [['\uD83E\uDDB6','Ankle Rehab','Graded loading and stability exercises'],['\uD83E\uDD32','Manual Therapy','Talocrural joint mobilization'],['\u26A1','Sports Rehab','Return-to-sport progression program']]
+  }
+};
+
+function selectPain(el, area) {
+  document.querySelectorAll('.pain-point').forEach(function (p) { p.classList.remove('active'); });
+  el.classList.add('active');
+  var data  = painData[area];
+  var panel = document.getElementById('painInfo');
+  if (!panel || !data) return;
+  panel.style.opacity = '0';
+  panel.style.transform = 'translateX(10px)';
+  setTimeout(function () {
+    var titleEl = document.getElementById('painTitle');
+    var descEl  = document.getElementById('painDesc');
+    var suggEl  = document.getElementById('painSuggestion');
+    if (titleEl) { titleEl.textContent = data.title; titleEl.style.color = data.color; }
+    if (descEl)  descEl.textContent = data.desc;
+    if (suggEl)  suggEl.innerHTML = data.suggestions.map(function (s) {
+      return '<div class="suggestion-item" style="border-left:3px solid ' + data.color + '">' +
+        '<div class="suggestion-icon">' + s[0] + '</div>' +
+        '<div class="suggestion-text"><strong>' + s[1] + '</strong><br><span style="color:var(--muted);font-size:0.75rem">' + s[2] + '</span></div>' +
+        '<a href="#book" style="margin-left:auto;background:var(--green-pale);color:var(--green);border:none;border-radius:8px;padding:5px 10px;font-size:0.7rem;font-weight:600;cursor:pointer;white-space:nowrap;text-decoration:none">Book \u2192</a>' +
+        '</div>';
+    }).join('');
+    panel.style.opacity = '1';
+    panel.style.transform = 'translateX(0)';
+  }, 150);
+}
+
+var painPanel = document.getElementById('painInfo');
+if (painPanel) painPanel.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+
+// ============================================================
+// INIT
+// ============================================================
+renderCal();
+</script>
+<style>
+@keyframes ld-spin { to { transform: rotate(360deg); } }
+</style>
+</body>
+</html>
