@@ -795,31 +795,36 @@
 <div class="login-gate" id="loginGate">
   <div class="login-box">
     <div class="login-logo">Physio<span>Core</span></div>
-    <div class="login-tagline">Advanced Physiotherapy Platform</div>
+    <div class="login-tagline">Advanced Physiotherapy &mdash; by Dr. Ambati Nikshith</div>
     <div class="login-tabs">
-      <div class="login-tab active" onclick="switchLoginTab('patient',this)">Patient Login</div>
-      <div class="login-tab" onclick="switchLoginTab('register',this)">Register</div>
+      <div class="login-tab active" id="tabBtnLogin" onclick="switchLoginTab('login',this)">Sign In</div>
+      <div class="login-tab" id="tabBtnRegister" onclick="switchLoginTab('register',this)">Register</div>
+      <div class="login-tab" id="tabBtnReset" onclick="switchLoginTab('reset',this)" style="display:none">Reset</div>
     </div>
-    <div id="loginError" class="login-error">Invalid email or password. Try again.</div>
+    <div id="loginError" class="login-error"></div>
+    <div id="loginSuccess" class="login-error" style="display:none;background:#D4EAD9;color:#1E6B45;"></div>
 
-    <!-- Patient Login -->
-    <div id="tabPatient">
+    <!-- SIGN IN -->
+    <div id="tabLogin">
       <div class="login-field">
         <label class="login-label">Email</label>
-        <input class="login-input" type="email" id="loginEmail" placeholder="you@email.com">
+        <input class="login-input" type="email" id="loginEmail" placeholder="you@email.com" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
       <div class="login-field">
         <label class="login-label">Password</label>
-        <input class="login-input" type="password" id="loginPwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        <input class="login-input" type="password" id="loginPwd" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
-      <button class="login-btn" onclick="doLogin()">Sign In →</button>
+      <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In &#8594;</button>
+      <div style="text-align:center;margin-top:10px;font-size:0.78rem;color:var(--muted)">
+        Forgot password? <span style="color:var(--green);font-weight:600;cursor:pointer" onclick="switchLoginTab('reset',document.getElementById('tabBtnReset'))">Reset it</span>
+      </div>
       <div class="login-divider"><span>or</span></div>
       <div class="login-guest">
-        Continue as <span onclick="guestLogin()">Guest (Browse Only)</span>
+        Continue as <span onclick="guestLogin()">Guest (no account needed)</span>
       </div>
     </div>
 
-    <!-- Register -->
+    <!-- REGISTER -->
     <div id="tabRegister" style="display:none">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="login-field">
@@ -832,18 +837,33 @@
         </div>
       </div>
       <div class="login-field">
-        <label class="login-label">Phone (for WhatsApp)</label>
-        <input class="login-input" type="tel" id="regPhone" placeholder="+91 98765 43210">
+        <label class="login-label">Phone (WhatsApp)</label>
+        <input class="login-input" type="tel" id="regPhone" placeholder="+91 90638 10312">
       </div>
       <div class="login-field">
         <label class="login-label">Email</label>
         <input class="login-input" type="email" id="regEmail" placeholder="you@email.com">
       </div>
       <div class="login-field">
-        <label class="login-label">Password</label>
-        <input class="login-input" type="password" id="regPwd" placeholder="Min. 6 characters">
+        <label class="login-label">Password (min 6 chars)</label>
+        <input class="login-input" type="password" id="regPwd" placeholder="Create a password" onkeydown="if(event.key==='Enter')doRegister()">
       </div>
-      <button class="login-btn" onclick="doRegister()">Create Account →</button>
+      <button class="login-btn" id="regBtn" onclick="doRegister()">Create Account &#8594;</button>
+      <div class="login-divider"><span>or</span></div>
+      <div class="login-guest">Already have an account? <span onclick="switchLoginTab('login',document.getElementById('tabBtnLogin'))">Sign in</span></div>
+    </div>
+
+    <!-- FORGOT PASSWORD -->
+    <div id="tabReset" style="display:none">
+      <div style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;line-height:1.6">Enter your registered email and we will send a password reset link.</div>
+      <div class="login-field">
+        <label class="login-label">Email Address</label>
+        <input class="login-input" type="email" id="resetEmail" placeholder="you@email.com" onkeydown="if(event.key==='Enter')doReset()">
+      </div>
+      <button class="login-btn" id="resetBtn" onclick="doReset()">Send Reset Link &#8594;</button>
+      <div style="text-align:center;margin-top:12px;font-size:0.78rem;color:var(--muted)">
+        <span style="color:var(--green);font-weight:600;cursor:pointer" onclick="switchLoginTab('login',document.getElementById('tabBtnLogin'))">&#8592; Back to Sign In</span>
+      </div>
     </div>
   </div>
 </div>
@@ -854,7 +874,7 @@
 </div>
 
 <!-- WhatsApp Float -->
-<a class="wa-float" href="https://wa.me/914023456789?text=Hi+PhysioCore!+I+need+to+book+an+appointment." target="_blank" title="Chat on WhatsApp">💬</a>
+<a class="wa-float" href="https://wa.me/919063810312?text=Hi+PhysioCore!+I+need+to+book+an+appointment." target="_blank" title="Chat on WhatsApp">💬</a>
 
 <!-- NAV -->
 <nav id="navbar">
@@ -1313,14 +1333,40 @@
 
 <!-- TEAM -->
 <section class="team-section" id="team">
-  <div class="section-label">Our Specialists</div>
-  <h2 class="section-title">Meet the Experts<br>Behind Your Recovery</h2>
+  <div class="section-label">About PhysioCore</div>
+  <h2 class="section-title">Founded by Dr. Ambati Nikshith<br>for Your Recovery</h2>
+
+  <!-- Founder Card -->
+  <div style="max-width:680px;margin:0 auto 48px;background:rgba(200,230,60,0.08);border:1.5px solid rgba(200,230,60,0.3);border-radius:20px;padding:32px;display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;">
+    <div style="width:80px;height:80px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:2.4rem;flex-shrink:0;">&#127891;</div>
+    <div style="flex:1;min-width:200px;">
+      <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:white;margin-bottom:4px;">Dr. Ambati Nikshith</div>
+      <div style="font-size:0.78rem;color:var(--accent);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px;">Founder &amp; Chief Physiotherapist</div>
+      <div style="font-size:0.88rem;color:rgba(255,255,255,0.7);line-height:1.7;">A visionary physiotherapist with a passion for combining evidence-based treatment with modern technology. Dr. Nikshith founded PhysioCore with the mission to make world-class physiotherapy accessible to every patient in Hyderabad and beyond. His approach integrates manual therapy, sports rehabilitation, and digital health tools for faster, lasting recovery.</div>
+      <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
+        <div style="text-align:center;background:rgba(255,255,255,0.06);border-radius:12px;padding:10px 18px;">
+          <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--accent);">2,500+</div>
+          <div style="font-size:0.65rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;">Patients Treated</div>
+        </div>
+        <div style="text-align:center;background:rgba(255,255,255,0.06);border-radius:12px;padding:10px 18px;">
+          <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--accent);">98%</div>
+          <div style="font-size:0.65rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;">Recovery Rate</div>
+        </div>
+        <div style="text-align:center;background:rgba(255,255,255,0.06);border-radius:12px;padding:10px 18px;">
+          <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--accent);">&#128222; 9063810312</div>
+          <div style="font-size:0.65rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;">Direct Contact</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-bottom:24px;">Our Specialist Team</div>
   <div class="team-grid">
     <div class="team-card reveal">
-      <div class="team-img">👩‍⚕️</div>
+      <div class="team-img">&#128105;&#8205;&#9877;&#65039;</div>
       <div class="team-body">
         <div class="team-name">Dr. Sarah Chen</div>
-        <div class="team-spec">Manual Therapy · Sports Rehab</div>
+        <div class="team-spec">Manual Therapy &middot; Sports Rehab</div>
         <div class="team-bio">15 years of expertise in sports physiotherapy. Former consultant to IPL teams. Specialist in shoulder and knee rehabilitation.</div>
         <div class="team-stats">
           <div class="team-stat"><div class="num">847</div><div class="lbl">Sessions</div></div>
@@ -1330,10 +1376,10 @@
       </div>
     </div>
     <div class="team-card reveal">
-      <div class="team-img">👨‍⚕️</div>
+      <div class="team-img">&#128104;&#8205;&#9877;&#65039;</div>
       <div class="team-body">
         <div class="team-name">Dr. Arjun Mehta</div>
-        <div class="team-spec">Neuro Rehab · Post-Surgery</div>
+        <div class="team-spec">Neuro Rehab &middot; Post-Surgery</div>
         <div class="team-bio">Post-doctoral researcher at AIIMS. Pioneered innovative neuroplasticity-based rehab protocols for stroke recovery patients.</div>
         <div class="team-stats">
           <div class="team-stat"><div class="num">1.1K</div><div class="lbl">Sessions</div></div>
@@ -1343,10 +1389,10 @@
       </div>
     </div>
     <div class="team-card reveal">
-      <div class="team-img">👩‍⚕️</div>
+      <div class="team-img">&#128105;&#8205;&#9877;&#65039;</div>
       <div class="team-body">
         <div class="team-name">Dr. Priya Nair</div>
-        <div class="team-spec">Chronic Pain · Dry Needling</div>
+        <div class="team-spec">Chronic Pain &middot; Dry Needling</div>
         <div class="team-bio">Certified acupuncturist and dry needling expert with a holistic approach combining Eastern and Western physiotherapy principles.</div>
         <div class="team-stats">
           <div class="team-stat"><div class="num">632</div><div class="lbl">Sessions</div></div>
@@ -1427,8 +1473,8 @@
       <h4>Contact</h4>
       <ul>
         <li><a href="#">📍 Jubilee Hills, Hyderabad</a></li>
-        <li><a href="#">📞 +91 40 2345 6789</a></li>
-        <li><a href="#">✉️ <span class="__cf_email__" data-cfemail="dab2bfb6b6b59aaab2a3a9b3b5b9b5a8bff4b3b4">[email&#160;protected]</span></a></li>
+        <li><a href="#">📞 +91 90638 10312</a></li>
+        <li><a href="#">✉️ info@physiocore.in</a></li>
         <li><a href="#">🕐 Mon–Sat 8AM–8PM</a></li>
       </ul>
     </div>
@@ -1440,68 +1486,169 @@
 </footer>
 
 <script>
-  // ── LOGIN SYSTEM ──────────────────────────────────────────
-  const USERS_KEY = 'physiocore_users';
-  const SESSION_KEY = 'physiocore_session';
-  const builtinUsers = [
-    { email: 'patient@physiocore.in', password: 'patient123', name: 'Demo Patient', phone: '+91 9876543210' },
-    { email: 'demo@physiocore.in',    password: 'demo123',    name: 'Demo User',    phone: '+91 9000000000' }
-  ];
-  function getUsers() {
-    const stored = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-    return [...builtinUsers, ...stored];
+  // ── FIREBASE AUTH ────────────────────────────────────────
+  var FB_AUTH_KEY = 'AIzaSyCx66BrTmvEtEoEsP_Q3q2tXbpI4Jy3sEs';
+  var FB_AUTH_URL = 'https://identitytoolkit.googleapis.com/v1/accounts';
+  var currentFbUser = null;
+
+  function fbErrMsg(msg) {
+    if (!msg) return 'Something went wrong. Please try again.';
+    if (msg.indexOf('EMAIL_NOT_FOUND') >= 0 || msg.indexOf('INVALID_PASSWORD') >= 0 || msg.indexOf('INVALID_LOGIN_CREDENTIALS') >= 0) return 'Incorrect email or password.';
+    if (msg.indexOf('EMAIL_EXISTS') >= 0) return 'This email is already registered.';
+    if (msg.indexOf('WEAK_PASSWORD') >= 0) return 'Password must be at least 6 characters.';
+    if (msg.indexOf('INVALID_EMAIL') >= 0) return 'Please enter a valid email address.';
+    if (msg.indexOf('TOO_MANY_ATTEMPTS') >= 0) return 'Too many attempts. Please try again later.';
+    if (msg.indexOf('USER_DISABLED') >= 0) return 'This account has been disabled.';
+    return msg;
   }
-  function getCurrentUser() {
-    try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
+
+  function showLoginErr(msg) {
+    var el = document.getElementById('loginError');
+    el.textContent = msg; el.style.display = 'block'; el.classList.add('show');
+    document.getElementById('loginSuccess').style.display = 'none';
   }
-  function switchLoginTab(tab, el) {
-    document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    document.getElementById('tabPatient').style.display  = tab === 'patient'  ? 'block' : 'none';
-    document.getElementById('tabRegister').style.display = tab === 'register' ? 'block' : 'none';
+  function showLoginOk(msg) {
+    var el = document.getElementById('loginSuccess');
+    el.textContent = msg; el.style.display = 'block';
+    document.getElementById('loginError').style.display = 'none';
     document.getElementById('loginError').classList.remove('show');
   }
-  function doLogin() {
-    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-    const pwd   = document.getElementById('loginPwd').value;
-    const user  = getUsers().find(u => u.email.toLowerCase() === email && u.password === pwd);
-    if (!user) { document.getElementById('loginError').classList.add('show'); return; }
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
-    onLoggedIn(user);
+  function clearLoginMsgs() {
+    document.getElementById('loginError').style.display = 'none';
+    document.getElementById('loginError').classList.remove('show');
+    document.getElementById('loginSuccess').style.display = 'none';
   }
-  function doRegister() {
-    const first = document.getElementById('regFirst').value.trim();
-    const last  = document.getElementById('regLast').value.trim();
-    const phone = document.getElementById('regPhone').value.trim();
-    const email = document.getElementById('regEmail').value.trim().toLowerCase();
-    const pwd   = document.getElementById('regPwd').value;
-    if (!first || !email || !pwd) { alert('Please fill in all required fields.'); return; }
-    if (pwd.length < 6) { alert('Password must be at least 6 characters.'); return; }
-    if (getUsers().find(u => u.email.toLowerCase() === email)) { alert('This email is already registered.'); return; }
-    const newUser = { email, password: pwd, name: (first + ' ' + last).trim(), phone };
-    const stored = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-    stored.push(newUser);
-    localStorage.setItem(USERS_KEY, JSON.stringify(stored));
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(newUser));
-    onLoggedIn(newUser);
+
+  function switchLoginTab(tab, el) {
+    document.querySelectorAll('.login-tab').forEach(function(t) { t.classList.remove('active'); });
+    if (el) el.classList.add('active');
+    document.getElementById('tabLogin').style.display    = (tab === 'login')    ? 'block' : 'none';
+    document.getElementById('tabRegister').style.display = (tab === 'register') ? 'block' : 'none';
+    document.getElementById('tabReset').style.display    = (tab === 'reset')    ? 'block' : 'none';
+    // Show reset tab button only when on reset
+    document.getElementById('tabBtnReset').style.display = (tab === 'reset') ? 'inline-block' : 'none';
+    clearLoginMsgs();
   }
+
+  function setBtnLoading(id, loading, label) {
+    var btn = document.getElementById(id);
+    if (!btn) return;
+    btn.disabled = loading;
+    btn.innerHTML = loading ? '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px"></span>Please wait...' : label;
+  }
+
+  async function doLogin() {
+    var email = document.getElementById('loginEmail').value.trim();
+    var pwd   = document.getElementById('loginPwd').value;
+    if (!email || !pwd) { showLoginErr('Please enter your email and password.'); return; }
+    setBtnLoading('loginBtn', true, 'Sign In &#8594;');
+    clearLoginMsgs();
+    try {
+      var res = await fetch(FB_AUTH_URL + ':signInWithPassword?key=' + FB_AUTH_KEY, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: pwd, returnSecureToken: true })
+      });
+      var d = await res.json();
+      if (!res.ok) throw new Error(d.error ? d.error.message : 'Login failed');
+      currentFbUser = { email: d.email, name: d.displayName || email.split('@')[0], token: d.idToken, uid: d.localId };
+      sessionStorage.setItem('physiocore_session', JSON.stringify(currentFbUser));
+      onLoggedIn(currentFbUser);
+    } catch(e) {
+      showLoginErr(fbErrMsg(e.message));
+    } finally {
+      setBtnLoading('loginBtn', false, 'Sign In &#8594;');
+    }
+  }
+
+  async function doRegister() {
+    var first = document.getElementById('regFirst').value.trim();
+    var last  = document.getElementById('regLast').value.trim();
+    var phone = document.getElementById('regPhone').value.trim();
+    var email = document.getElementById('regEmail').value.trim();
+    var pwd   = document.getElementById('regPwd').value;
+    if (!first || !email || !pwd) { showLoginErr('Please fill in all required fields.'); return; }
+    if (pwd.length < 6) { showLoginErr('Password must be at least 6 characters.'); return; }
+    setBtnLoading('regBtn', true, 'Create Account &#8594;');
+    clearLoginMsgs();
+    try {
+      var res = await fetch(FB_AUTH_URL + ':signUp?key=' + FB_AUTH_KEY, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: pwd, returnSecureToken: true })
+      });
+      var d = await res.json();
+      if (!res.ok) throw new Error(d.error ? d.error.message : 'Registration failed');
+      var fullName = (first + ' ' + last).trim();
+      // Set display name
+      await fetch(FB_AUTH_URL + ':update?key=' + FB_AUTH_KEY, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: d.idToken, displayName: fullName, returnSecureToken: false })
+      });
+      currentFbUser = { email: d.email, name: fullName, phone: phone, token: d.idToken, uid: d.localId };
+      sessionStorage.setItem('physiocore_session', JSON.stringify(currentFbUser));
+      onLoggedIn(currentFbUser);
+    } catch(e) {
+      showLoginErr(fbErrMsg(e.message));
+    } finally {
+      setBtnLoading('regBtn', false, 'Create Account &#8594;');
+    }
+  }
+
+  async function doReset() {
+    var email = document.getElementById('resetEmail').value.trim();
+    if (!email) { showLoginErr('Please enter your email address.'); return; }
+    setBtnLoading('resetBtn', true, 'Send Reset Link &#8594;');
+    clearLoginMsgs();
+    try {
+      var res = await fetch(FB_AUTH_URL + ':sendOobCode?key=' + FB_AUTH_KEY, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestType: 'PASSWORD_RESET', email: email })
+      });
+      var d = await res.json();
+      if (!res.ok) throw new Error(d.error ? d.error.message : 'Reset failed');
+      showLoginOk('Password reset email sent! Check your inbox (and spam folder).');
+      document.getElementById('resetEmail').value = '';
+    } catch(e) {
+      showLoginErr(fbErrMsg(e.message));
+    } finally {
+      setBtnLoading('resetBtn', false, 'Send Reset Link &#8594;');
+    }
+  }
+
   function guestLogin() {
-    const guest = { email: 'guest', name: 'Guest', phone: '' };
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(guest));
+    var guest = { email: '', name: 'Guest', phone: '' };
+    sessionStorage.setItem('physiocore_session', JSON.stringify(guest));
     onLoggedIn(guest);
   }
+
+  function getCurrentUser() {
+    try { return JSON.parse(sessionStorage.getItem('physiocore_session')); } catch { return null; }
+  }
+
   function onLoggedIn(user) {
     document.getElementById('loginGate').classList.add('hidden');
-    document.getElementById('chipName').textContent = user.name.split(' ')[0];
+    var name = (user.name || user.email || 'Patient').split(' ')[0];
+    document.getElementById('chipName').textContent = name;
     document.getElementById('userChip').classList.add('visible');
+    currentFbUser = user;
   }
+
   function logoutUser() {
     if (!confirm('Log out?')) return;
-    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem('physiocore_session');
+    currentFbUser = null;
     document.getElementById('loginGate').classList.remove('hidden');
     document.getElementById('userChip').classList.remove('visible');
+    // Reset to sign-in tab
+    switchLoginTab('login', document.getElementById('tabBtnLogin'));
   }
-  (function() { const u = getCurrentUser(); if (u) onLoggedIn(u); })();
+
+  // Add spin animation for loading buttons
+  var spinStyle = document.createElement('style');
+  spinStyle.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+  document.head.appendChild(spinStyle);
+
+  // Auto-restore session
+  (function() { var u = getCurrentUser(); if (u) onLoggedIn(u); })();
 
   // ── CUSTOM CURSOR ─────────────────────────────────────────
   const cursor = document.getElementById('cursor');
